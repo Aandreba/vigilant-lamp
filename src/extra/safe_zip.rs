@@ -1,4 +1,4 @@
-use crate::extra::array_builder::ArrayBuilder;
+use array_macro::array;
 
 pub trait SafeZip<T: Copy, const N: usize> {
     fn safe_zip<U: Copy> (self, rhs: [U;N]) -> [(T,U); N];
@@ -6,6 +6,6 @@ pub trait SafeZip<T: Copy, const N: usize> {
 
 impl<T: Copy, const N: usize> SafeZip<T,N> for [T; N] {
     fn safe_zip<U: Copy> (self, rhs: [U;N]) -> [(T,U); N] {
-        <[(T,U);N]>::build(|i| (self[i], rhs[i]))
+        array![i => (self[i], rhs[i]); N]
     }
 }

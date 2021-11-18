@@ -1,7 +1,9 @@
-use std::{fmt::{Debug, Display}, ops::{Deref, Add, Sub, Mul, Div}};
+use std::{fmt::{Debug, Display}, iter::Skip, ops::{Deref, Add, Sub, Mul, Div}};
+use array_macro::array;
 use num::Num;
 
 use crate::extra::array_builder::ArrayBuilder;
+use crate::extra::{array_concat::{IteratorConcat}, iter_range::RangedIterator};
 use super::array_ext::NumArray;
 
 pub struct Matrix<T: Num, const R: usize, const C: usize>([NumArray<T,C>;R]);
@@ -31,6 +33,14 @@ impl<T: Num, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 }
 
+// TRANSPOSE
+impl<T: Num + Copy, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub fn T (&self) -> Matrix<T, C, R> {
+        let transp : [NumArray<T,R>;C] = array![i => NumArray(array![j => self[j][i]; R]); C];
+        Matrix::new(transp)
+    }
+}
+
 // DEREF
 impl<T: Num, const R: usize, const C: usize> Deref for Matrix<T,R,C> {
     type Target = [NumArray<T,C>;R];
@@ -45,8 +55,8 @@ impl<T: Num + Copy, const R: usize, const C: usize> Add<Matrix<T, R, C>> for Mat
     type Output = Matrix<T, R, C>;
 
     fn add (self, rhs: Matrix<T, R, C>) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] + rhs[i][j]));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] + rhs[i]; R];
+        Matrix::new(array)
     }
 }
 
@@ -54,8 +64,8 @@ impl<T: Num + Copy, const R: usize, const C: usize> Add<T> for Matrix<T, R, C> {
     type Output = Matrix<T, R, C>;
 
     fn add (self, rhs: T) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] + rhs));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] + rhs; R];
+        Matrix::new(array)
     }
 }
 
@@ -64,8 +74,8 @@ impl<T: Num + Copy, const R: usize, const C: usize> Sub<Matrix<T, R, C>> for Mat
     type Output = Matrix<T, R, C>;
 
     fn sub (self, rhs: Matrix<T, R, C>) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] - rhs[i][j]));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] - rhs[i]; R];
+        Matrix::new(array)
     }
 }
 
@@ -73,8 +83,8 @@ impl<T: Num + Copy, const R: usize, const C: usize> Sub<T> for Matrix<T, R, C> {
     type Output = Matrix<T, R, C>;
 
     fn sub (self, rhs: T) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] - rhs));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] - rhs; R];
+        Matrix::new(array)
     }
 }
 
@@ -102,8 +112,8 @@ impl<T: Num + Copy, const R: usize, const C: usize> Mul<T> for Matrix<T, R, C> {
     type Output = Matrix<T, R, C>;
 
     fn mul (self, rhs: T) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] * rhs));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] * rhs; R];
+        Matrix::new(array)
     }
 }
 
@@ -112,8 +122,93 @@ impl<T: Num + Copy, const R: usize, const C: usize> Div<T> for Matrix<T, R, C> {
     type Output = Matrix<T, R, C>;
 
     fn div (self, rhs: T) -> Self::Output {
-        let array : [[T;C];R] = <[T;C]>::build2(|i| <[T;C]>::build(|j| self[i][j] / rhs));
-        Matrix::from_array(array)
+        let array : [NumArray<T,C>;R] = array![i => self[i] / rhs; R];
+        Matrix::new(array)
+    }
+}
+
+// PROPERTIES
+impl<T: Num + Copy, const N: usize> SquareMatrix<T,N> {
+    pub fn diagonal (values: [T;N]) -> SquareMatrix<T,N> {
+        let array : [[T;N];N] = <[T;N]>::build2(|i| {
+            let row = [T::zero(); N];
+            row[i] = values[i];
+            row
+        });
+
+        SquareMatrix::from_array(array)
+    }
+
+    pub fn identity () -> SquareMatrix<T,N> {
+        let array : [[T;N];N] = <[T;N]>::build2(|i| {
+            let row = [T::zero(); N];
+            row[i] = T::one();
+            row
+        });
+
+        SquareMatrix::from_array(array)
+    }
+
+    pub fn tr (&self) -> T {
+        let mut sum = T::zero();
+        for i in 0..N {
+            sum = sum + self[i][i]
+        }
+
+        sum
+    }
+
+    fn _det<A: Iterator<Item = B>, B: Iterator<Item = T>> (parent: &mut A, len: usize) -> T {
+        if len == 0 {
+            return T::one() / T::zero()
+        } else if len == 1 {
+            return parent.next().expect("Unexpected error").next().expect("Unexpected error");
+        } else if len == 2 {
+            let x = parent.next().expect("Unexpected error");
+            let y = parent.next().expect("Unexpected error");
+            
+            let xx = x.next().expect("Unexpected error");
+            let xy = x.next().expect("Unexpected error");
+            let yx = y.next().expect("Unexpected error");
+            let yy = y.next().expect("Unexpected error");
+
+            return xx * yy - xy * yx
+        }
+        
+        let sub_len = len - 1;
+        let first_row = parent.next().expect("Unexpected error"); // (n-1) x n
+        
+        let mut det = T::zero();
+        let mut add = true;
+
+        for i in 0..len {
+            let ip1 = i + 1;
+            let mut child : Vec<IteratorConcat<T, RangedIterator<B>, RangedIterator<Skip<B>>>> = Vec::with_capacity(sub_len);
+        
+            for k in 0..sub_len {
+                let row = parent.next().expect("Unexpected error");
+                let first = RangedIterator::limit(row, i);
+                let last = RangedIterator::new(row, ip1, sub_len);
+
+                let sub_row = IteratorConcat::new(first, last);
+                child[k] = sub_row;
+            }
+
+            let mut iter = child.iter_mut();
+            let sub_det = first_row.next().expect("Unexpected error") * SquareMatrix::<T, N>::_det(&mut iter, sub_len);
+
+            det = if add { det + sub_det } else { det - sub_det };
+            add = !add;
+        }
+
+        det
+    }
+
+    pub fn det (self) -> T {
+        let mut map = self.map(|x| x.iter()).iter_mut();
+        let result = SquareMatrix::<T, N>::_det(&mut map, N);
+
+        return result;
     }
 }
 
