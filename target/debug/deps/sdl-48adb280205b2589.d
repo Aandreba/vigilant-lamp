@@ -1,0 +1,15 @@
+/Users/Adebas/Desktop/RustMath/target/debug/deps/sdl-48adb280205b2589.rmeta: /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/lib.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/audio.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/cd.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/event.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/joy.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/keysym.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/mouse.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/video.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/gl.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/wm.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/sdl.rs
+
+/Users/Adebas/Desktop/RustMath/target/debug/deps/sdl-48adb280205b2589.d: /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/lib.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/audio.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/cd.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/event.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/joy.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/keysym.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/mouse.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/video.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/gl.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/wm.rs /Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/sdl.rs
+
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/lib.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/audio.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/cd.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/event.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/joy.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/keysym.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/mouse.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/video.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/gl.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/wm.rs:
+/Users/Adebas/.cargo/registry/src/github.com-1ecc6299db9ec823/sdl-0.3.6/src/sdl/sdl.rs:

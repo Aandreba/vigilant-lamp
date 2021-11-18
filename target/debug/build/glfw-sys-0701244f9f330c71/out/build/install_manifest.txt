@@ -1,0 +1,8 @@
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/include/GLFW/glfw3.h
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/include/GLFW/glfw3native.h
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/cmake/glfw3/glfw3Config.cmake
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/cmake/glfw3/glfw3ConfigVersion.cmake
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/cmake/glfw3/glfw3Targets.cmake
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/cmake/glfw3/glfw3Targets-debug.cmake
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/pkgconfig/glfw3.pc
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/lib/libglfw3.a

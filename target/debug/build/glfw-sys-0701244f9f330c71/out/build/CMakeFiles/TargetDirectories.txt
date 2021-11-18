@@ -1,0 +1,14 @@
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/install/local.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/rebuild_cache.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/edit_cache.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/install/strip.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/uninstall.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/install.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/CMakeFiles/list_install_components.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/install/local.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/install/strip.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/install.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/list_install_components.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/rebuild_cache.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/edit_cache.dir
+/Users/Adebas/Desktop/RustMath/target/debug/build/glfw-sys-0701244f9f330c71/out/build/src/CMakeFiles/glfw.dir
