@@ -29,6 +29,7 @@ impl<T: Copy + Num, const N: usize> NumericArrayTraits<T,N> for [T;N] {
 }
 
 // NUMERIC ARRAY ARITHMETIC EXTENSION
+#[derive(Clone)]
 pub struct NumArray<T: Num, const N: usize>(pub [T;N]);
 
 impl<T: Num + Copy, const N: usize> NumArray<T,N>  {
@@ -179,3 +180,5 @@ impl<T: Copy + Num, const N: usize> Div<T> for NumArray<T,N> {
         return NumArray(array);
     }
 }
+
+impl<T: Copy + Num, const N: usize> Copy for NumArray<T,N> {}

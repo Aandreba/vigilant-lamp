@@ -7,13 +7,19 @@ pub trait Camera {
 }
 
 // PERSPECTIVE CAMERA
-struct PerspectiveCamera {
+pub struct PerspectiveCamera {
     pub fov: f32,
     pub z_near: f32,
     pub z_far: f32,
 
     pub position: NumArray<f32, 3>,
     pub rotation: Quaternion32
+}
+
+impl PerspectiveCamera {
+    pub fn new (fov: f32, z_near: f32, z_far: f32) -> PerspectiveCamera {
+        PerspectiveCamera { fov, z_near, z_far, position: NumArray::zero(), rotation: Quaternion32::zero_rotation() }
+    }
 }
 
 impl Camera for PerspectiveCamera {
