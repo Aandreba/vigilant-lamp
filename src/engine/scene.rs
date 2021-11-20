@@ -1,18 +1,23 @@
-use crate::{graph::window::Window, math::matrix::Matrix4};
+use crate::{graph::{renderer::Renderer, window::Window}, math::matrix::Matrix4};
 use super::{camera::Camera, objectg::ObjectG};
 
-pub struct Scene<W: Window, C: Camera> {
-    pub window: W,
+pub struct Scene<R: Renderer, C: Camera> {
+    pub window: R::WindowType,
+    pub program: R::ProgramType,
     pub camera: C,
-    pub objects: Vec<ObjectG>
+    pub objects: Vec<ObjectG<R::MeshType>>
 }
 
-impl<W: Window, C: Camera> Scene<W,C> {
-    pub fn new (window: W, camera: C) -> Scene<W,C> {
-        Scene { window, camera, objects: Vec::new() }
+impl<R: Renderer, C: Camera> Scene<R,C> {
+    pub fn new (window: R::WindowType, program: R::ProgramType, camera: C, objects: Vec<ObjectG<R::MeshType>>) -> Scene<R,C> {
+        Scene { window, program, camera, objects }
     }
 
-    pub fn view_matrix (&self) -> Matrix4<f32> {
-        self.camera.view_matrix(&self.window)
+    pub fn projection_matrix (&self) -> Matrix4<f32> {
+        self.camera.projection_matrix(&self.window)
+    }
+
+    pub fn update (&self) {
+        self.window.update();
     }
 }

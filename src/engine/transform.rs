@@ -1,5 +1,4 @@
-use crate::math::quaternion::quaternion::{Quaternion, Quaternion32};
-use crate::math::array_ext::NumArray;
+use crate::math::{array_ext::NumArray, quaternion::Quaternion32};
 
 pub struct Transform {
     pub position: NumArray<f32,3>,
@@ -9,12 +8,16 @@ pub struct Transform {
 
 // INITS
 impl Transform {
+    pub fn default () -> Transform {
+        Transform { position: NumArray::zero(), rotation: Quaternion32::zero_rotation(), scale: NumArray::one() }
+    }
+
     pub fn new (position: NumArray<f32, 3>, rotation: Quaternion32, scale: NumArray<f32, 3>) -> Transform {
         Transform { position, rotation, scale }
     }
 
     pub fn of_position (position: NumArray<f32, 3>) -> Transform {
-        Transform { position, rotation: Quaternion::zero_rotation(), scale: NumArray::one() }
+        Transform { position, rotation: Quaternion32::zero_rotation(), scale: NumArray::one() }
     }
 
     pub fn of_rotation (rotation: Quaternion32) -> Transform {

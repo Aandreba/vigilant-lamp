@@ -1,8 +1,8 @@
-use std::{fmt::{Debug, Display}, iter::Skip, ops::{Deref, Add, Sub, Mul, Div}};
+use std::{fmt::{Debug, Display}, ops::{Deref, Add, Sub, Mul, Div}};
 use array_macro::array;
 use num::Num;
 
-use crate::{extra::{array_builder::ArrayBuilder, safe_zip::SafeZip}, varray};
+use crate::{extra::{array_builder::ArrayBuilder}};
 use super::array_ext::NumArray;
 
 pub struct Matrix<T: Num, const R: usize, const C: usize>([NumArray<T,C>;R]);
