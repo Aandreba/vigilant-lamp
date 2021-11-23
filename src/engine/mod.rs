@@ -3,3 +3,4 @@ pub mod objectg;
 pub mod scene;
 pub mod transform;
 pub mod clock;
+pub mod script;

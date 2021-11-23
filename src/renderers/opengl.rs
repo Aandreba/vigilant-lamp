@@ -1,11 +1,12 @@
-use std::{io::Read, str::FromStr};
-use gl33::{GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FLOAT, GL_FRAGMENT_SHADER, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glLinkProgram, glShaderSource, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
+use core::panic;
+use std::{fmt::format, io::Read, ops::Deref, rc::Rc, str::FromStr, time::Duration};
+use gl33::{GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FLOAT, GL_FRAGMENT_SHADER, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{camera::Camera, clock::Clock, scene::Scene}, graph::{mesh::Mesh, renderer::Renderer, shaders::{program::Program, shader::{FragmentShader, VertexShader}}, window::{self, Window}}};
+use crate::{engine::{camera::Camera, clock::Clock, objectg::ObjectG, scene::{Scene}}, graph::{mesh::Mesh, renderer::{self, Renderer}, shaders::{program::{self, Program, Uniform}, shader::{FragmentShader, VertexShader}}, window::{Window}}, math::matrix::{Matrix2, Matrix3, Matrix4}};
 
 // RENDERER
 pub struct OpenGL {
-    event_loop: EventLoop<()>
+    pub event_loop: EventLoop<()>
 }
 
 impl OpenGL {
@@ -19,25 +20,47 @@ impl Renderer for OpenGL {
     type ProgramType = ProgramGL;
     type MeshType = MeshGL;
 
-    fn run<C: Camera> (self, scene: Scene<OpenGL, C>) {
+    fn run (self, mut scene: Scene<Self>) {
         let mut clock = Clock::new();
+        match scene.script.start {
+            Some(x) => x(&mut scene),
+            None => ()
+        }
 
         self.event_loop.run(move |event, _, control_flow| {
-            println!("{:?}", event);
             *control_flow = ControlFlow::Wait;
             
-            scene.camera.get_position();
             match event {
-                Event::LoopDestroyed => return,
-                Event::WindowEvent { event, .. } => match event {
-                    WindowEvent::Resized(physical_size) => scene.window.context.resize(physical_size),
-                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                    _ => (),
-                },
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    window_id,
+                } if window_id == scene.window.context.window().id() => *control_flow = ControlFlow::Exit,
+
                 Event::RedrawRequested(_) => {
-                    scene.frame(clock.delta());
+                    scene.window.clear();
+                    scene.program.bind();
+                    
+                    let delta = clock.delta();
+                    //let wm = scene.program.get_uniform("world_matrix").expect("Unexpected error");
+                    
+                    match scene.script.update {
+                        Some(x) => x(&mut scene, &delta),
+                        None => ()
+                    }
+
+                    for elem in scene.objects.iter() {
+                        scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
+                        unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
+                    }
+
+                    scene.program.unbind();
+                    scene.window.update()
+                },
+
+                Event::MainEventsCleared => {
+                    scene.window.context.window().request_redraw();
                 }
-                _ => (),
+                _ => ()
             }
         })
     }
@@ -90,7 +113,7 @@ impl Renderer for OpenGL {
         }
     }
 
-    fn create_program (&self, vertex: VertexGL, fragment: FragmentGL) -> ProgramGL {
+    fn create_program (&self, vertex: VertexGL, fragment: FragmentGL, uniforms: &[&str]) -> ProgramGL {
         let id  = glCreateProgram();
         if id == 0 {
             panic!("Error creating program");
@@ -106,11 +129,12 @@ impl Renderer for OpenGL {
         unsafe {
             glGetProgramiv(id, GL_LINK_STATUS, &mut success);
             if success == 0 {
-                let mut log_string = String::new();
-                let mut log_len = 0_i32;
+                let mut log_string : Vec<u8> = Vec::with_capacity(1024);
+                let mut log_len = 0;
 
-                glGetShaderInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
-                panic!("{}", log_string);
+                glGetProgramInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
+                log_string.set_len(log_len as usize);
+                panic!("{}", String::from_utf8(log_string).unwrap());
             }
         }
 
@@ -120,15 +144,22 @@ impl Renderer for OpenGL {
             glGetProgramiv(id, GL_VALIDATE_STATUS, &mut success);
 
             if success == 0 {
-                let mut log_string = String::new();
-                let mut log_len = 0_i32;
+                let mut log_string : Vec<u8> = Vec::with_capacity(1024);
+                let mut log_len = 0;
 
-                glGetShaderInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
-                panic!("{}", log_string);
+                glGetProgramInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
+                log_string.set_len(log_len as usize);
+                panic!("{}", String::from_utf8(log_string).unwrap());
             }
         }
 
-        ProgramGL { id, vertex, fragment }
+        // TODO UNIFORMS
+        let uniform_cast : Vec<UniformGL> = uniforms.iter()
+            .map(|x| UniformGL { name: String::from_str(x).unwrap(), id: unsafe { glGetUniformLocation(id, format!("{}{}", x, "\0").as_ptr() as *const _) } })
+            .collect();
+
+        println!("{}: {}", uniform_cast[0].name, uniform_cast[0].id);
+        ProgramGL { id, vertex, fragment, uniforms: uniform_cast }
     }
 
     fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> MeshGL {
@@ -153,19 +184,21 @@ impl Renderer for OpenGL {
     }
 
     fn draw_mesh (&self, mesh: &MeshGL) {
-        glBindVertexArray(mesh.id);
-
-        unsafe {
-            glEnableVertexAttribArray(0);
-            glDrawElements(GL_TRIANGLES, 3 * mesh.index_count as i32, GL_UNSIGNED_INT, 0 as *const _);
-            glDisableVertexAttribArray(0);
-        }
-
-        glBindVertexArray(0);
+        unsafe { OpenGL::draw_mesh_static(mesh) }
     }
 }
 
 impl OpenGL {
+    pub unsafe fn draw_mesh_static (mesh: &MeshGL) {
+        glBindVertexArray(mesh.id);
+        glEnableVertexAttribArray(0);
+
+        glDrawElements(GL_TRIANGLES, 3 * mesh.index_count as i32, GL_UNSIGNED_INT, 0 as *const _);
+        
+        glDisableVertexAttribArray(0);
+        glBindVertexArray(0);
+    }
+
     unsafe fn buffer_data (&self, typ: GLenum, data: &[u8]) -> u32 {
         let mut id = 0;
 
@@ -215,6 +248,7 @@ impl FragmentShader for FragmentGL {}
 // SHADER PROGRAM
 pub struct ProgramGL {
     id: u32,
+    uniforms: Vec<UniformGL>,
     vertex: VertexGL,
     fragment: FragmentGL
 }
@@ -222,6 +256,7 @@ pub struct ProgramGL {
 impl Program for ProgramGL {
     type Vertex = VertexGL;
     type Fragment = FragmentGL;
+    type Uniform = UniformGL;
 
     fn get_vertex (&self) -> &Self::Vertex {
         &self.vertex
@@ -231,12 +266,111 @@ impl Program for ProgramGL {
         &self.fragment
     }
 
+    fn get_uniforms(&self) -> &[Self::Uniform] {
+        self.uniforms.as_ref()
+    }
+
+    fn set_bool (&self, key: &Self::Uniform, value: bool) {
+        self.set_int(key, if value { 1 } else { 0 })
+    }
+
+    fn set_bools (&self, key: &Self::Uniform, value: &[bool]) {
+        let map : Vec<i32> = value.iter().map(|x| if *x { 1 } else { 0 }).collect();
+        self.set_ints(key, map.as_ref())
+    }
+
+    fn set_int(&self, key: &Self::Uniform, value: i32) {
+        unsafe {
+            glUniform1i(key.id, value) 
+        }
+    }
+
+    fn set_ints (&self, key: &Self::Uniform, value: &[i32]) {
+        unsafe {
+            glUniform1iv(key.id, value.len() as i32, value.as_ptr())
+        }
+    }
+
+    fn set_uint (&self, key: &Self::Uniform, value: u32) {
+        unsafe {
+            glUniform1ui(key.id, value)
+        }
+    }
+
+    fn set_uints (&self, key: &Self::Uniform, value: &[u32]) {
+        unsafe {
+            glUniform1uiv(key.id, value.len() as i32, value.as_ptr())
+        }
+    }
+
+    fn set_float(&self, key: &Self::Uniform, value: f32) {
+        unsafe {
+            glUniform1f(key.id, value)
+        }
+    }
+
+    fn set_floats (&self, key: &Self::Uniform, value: &[f32]) {
+        unsafe {
+            glUniform1fv(key.id, value.len() as i32, value.as_ptr())
+        }   
+    }
+
+    fn set_float_mat2(&self, key: &Self::Uniform, value: Matrix2<f32>) {
+        unsafe {
+            glUniformMatrix2fv(key.id, 1, 0, value.flat().as_ptr())
+        }
+    }
+
+    fn set_float_mat3(&self, key: &Self::Uniform, value: Matrix3<f32>) {
+        unsafe {
+            glUniformMatrix3fv(key.id, 1, 0, value.flat().as_ptr())
+        }
+    }
+
+    fn set_float_mat4(&self, key: &Self::Uniform, value: Matrix4<f32>) {
+        unsafe {
+            glUniformMatrix4fv(key.id, 1, 0, value.flat().as_ptr())
+        }
+    }
+
+    fn set_double(&self, key: &Self::Uniform, value: f64) {
+        panic!("Unsuported operation")
+    }
+
+    fn set_doubles (&self, key: &Self::Uniform, value: &[f64]) {
+        panic!("Unsuported operation")  
+    }
+
+    fn set_double_mat2(&self, key: &Self::Uniform, value: Matrix2<f64>) {
+        panic!("Unsuported operation")
+    }
+
+    fn set_double_mat3(&self, key: &Self::Uniform, value: Matrix3<f64>) {
+        panic!("Unsuported operation")
+    }
+
+    fn set_double_mat4(&self, key: &Self::Uniform, value: Matrix4<f64>) {
+        panic!("Unsuported operation")
+    }
+
     fn bind(&self) {
         glUseProgram(self.id)
     }
 
     fn unbind(&self) {
         glUseProgram(0)
+    }
+}
+
+// UNIFORMS
+pub struct UniformGL {
+    name: String,
+    id: i32
+}
+
+impl Uniform for UniformGL  {
+    fn get_name (&self) -> &str {
+        self.name.as_str()
     }
 }
 
@@ -263,7 +397,7 @@ impl Mesh for MeshGL {
 // WINDOW
 pub struct WinitWindow {
     title: String,
-    context: WindowedContext<PossiblyCurrent>
+    pub context: WindowedContext<PossiblyCurrent>
 }
 
 impl crate::graph::window::Window for WinitWindow {

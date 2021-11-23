@@ -30,7 +30,7 @@ impl<T: Copy + Num, const N: usize> NumericArrayTraits<T,N> for [T;N] {
 
 // NUMERIC ARRAY ARITHMETIC EXTENSION
 #[derive(Clone)]
-pub struct NumArray<T: Num, const N: usize>(pub [T;N]);
+pub struct NumArray<T: Num, const N: usize> (pub [T;N]);
 
 impl<T: Num + Copy, const N: usize> NumArray<T,N>  {
     pub fn zero () -> NumArray<T,N> {
@@ -39,6 +39,22 @@ impl<T: Num + Copy, const N: usize> NumArray<T,N>  {
 
     pub fn one () -> NumArray<T,N> {
         NumArray([T::one(); N])
+    }
+
+    pub fn x (&self) -> T {
+        self[0]
+    }
+
+    pub fn y (&self) -> T {
+        self[1]
+    }
+
+    pub fn z (&self) -> T {
+        self[2]
+    }
+
+    pub fn w (&self) -> T {
+        self[3]
     }
 }
 

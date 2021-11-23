@@ -1,4 +1,4 @@
-use crate::math::{array_ext::NumArray, quaternion::Quaternion32};
+use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
 
 pub struct Transform {
     pub position: NumArray<f32,3>,
@@ -29,14 +29,40 @@ impl Transform {
     }
 
     pub fn of_angles (roll: f32, pitch: f32, yaw: f32) -> Transform {
-         Transform { position: NumArray::zero(), rotation: Quaternion32::from_angles(roll, pitch, yaw), scale: NumArray::one() }
+        Transform { position: NumArray::zero(), rotation: Quaternion32::from_angles(roll, pitch, yaw), scale: NumArray::one() }
     }
 }
 
 // METHODS
 impl Transform {
-    fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {
+    pub fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {
         self.rotation = self.rotation * Quaternion32::from_angles(roll, pitch, yaw);
         self.rotation = self.rotation.unit();
+    }
+
+    fn position_matrix (&self) -> Matrix4<f32> {
+        Matrix4::new([
+            NumArray([1., 0., 0., self.position.x()]),
+            NumArray([0., 1., 0., self.position.y()]),
+            NumArray([0., 0., 1., self.position.z()]),
+            NumArray([0., 0., 0., 1.]),
+        ])
+    }
+
+    fn scale_matrix (&self) -> Matrix4<f32> {
+        Matrix4::new([
+            NumArray([self.scale.x(), 0., 0., 0.]),
+            NumArray([0., self.scale.y(), 0., 0.]),
+            NumArray([0., 0., self.scale.z(), 0.]),
+            NumArray([0., 0., 0., 1.]),
+        ])
+    }
+
+    fn rotation_matrix (&self) -> Matrix4<f32> {
+        self.rotation.rot_matrix_4()
+    }
+
+    pub fn matrix (&self) -> Matrix4<f32> {
+        self.position_matrix() * self.rotation_matrix() * self.scale_matrix()
     }
 }

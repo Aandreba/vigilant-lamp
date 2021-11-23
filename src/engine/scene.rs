@@ -1,38 +1,26 @@
-use std::time::Duration;
+use std::{rc::Rc, time::Duration};
+use glutin::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}};
 
-use crate::{graph::{renderer::Renderer, shaders::program::Program, window::Window}, math::matrix::Matrix4};
-use super::{camera::Camera, clock::Clock, objectg::ObjectG};
+use crate::{graph::{renderer::Renderer, window::Window}, math::matrix::Matrix4, renderers::opengl::OpenGL};
+use super::{camera::{Camera}, clock::Clock, objectg::ObjectG, script::{self, Script}};
 
-pub struct Scene<R: Renderer, C: Camera> {
-    pub renderer: R,
+// SCENE
+pub struct Scene<R: Renderer> {
     pub window: R::WindowType,
     pub program: R::ProgramType,
-    pub camera: C,
-    pub objects: Vec<ObjectG<R::MeshType>>
+    pub objects: Vec<ObjectG<R::MeshType>>,
+    pub camera: Box<dyn Camera>,
+
+    pub script: Script<R>
 }
 
-impl<R: Renderer, C: Camera> Scene<R,C> {
-    pub fn new (renderer: R, window: R::WindowType, program: R::ProgramType, camera: C, objects: Vec<ObjectG<R::MeshType>>) -> Scene<R,C> {
-        Scene { renderer, window, program, camera, objects }
+impl<R: Renderer> Scene<R> {
+    pub fn new<C: 'static + Camera> (window: R::WindowType, program: R::ProgramType, camera: C, objects: Vec<ObjectG<R::MeshType>>, script: Script<R>) -> Scene<R> {
+        Scene { window, program, objects, camera: Box::new(camera), script: script }
     }
 
-    pub fn projection_matrix (&self) -> Matrix4<f32> {
-        self.camera.projection_matrix(&self.window)
-    }
-
-    pub fn run (self) {
-        self.renderer.run(self);
-    }
-
-    pub fn frame (&self, delta: Duration) {
-        self.window.clear();
-        self.program.bind();
-
-        for element in self.objects.iter() {
-            self.renderer.draw_mesh(&element.mesh);
-        }
-
-        self.program.unbind();
-        self.window.update();
+    fn projection_matrix (&self) -> Matrix4<f32> {
+        let size = self.window.get_size();
+        self.camera.projection_matrix(size.0, size.1)
     }
 }

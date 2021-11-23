@@ -1,6 +1,8 @@
 use num::Float;
 use std::{fmt::{Display, Formatter, Result}, ops::{Add, Sub, Mul, Div}};
-use crate::math::array_ext::{NumArray, NumericArrayTraits};
+
+use crate::{extra::num_two::NumericTwo, math::array_ext::{NumArray, NumericArrayTraits}};
+use super::matrix::{Matrix3, Matrix4, SquareMatrix};
 
 pub type Quaternion32 = Quaternion<f32>;
 pub type Quaternion64 = Quaternion<f64>;
@@ -26,8 +28,8 @@ impl<T: Float> Quaternion<T> {
         Quaternion { w, i: v[0], j: v[1], k: v[2] }
     }
 
-    pub fn from_angles (roll: T, pitch: T, yaw: T) -> Quaternion<T> {
-        let two = T::one() + T::one();
+    pub fn from_angles (roll: T, pitch: T, yaw: T) -> Quaternion<T> where T: NumericTwo {
+        let two = T::two();
 
         let rsc = (roll / two).sin_cos();
         let psc = (pitch / two).sin_cos();
@@ -43,7 +45,7 @@ impl<T: Float> Quaternion<T> {
         Quaternion { w: T::one(), i: T::zero(), j: T::zero(), k: T::zero() }
     }
 
-    pub fn rotate (mut self, roll: T, pitch: T, yaw: T) {
+    pub fn rotate (mut self, roll: T, pitch: T, yaw: T) where T: NumericTwo {
         self = self * Quaternion::from_angles(roll, pitch, yaw);
         self = self.unit();
     }
@@ -52,11 +54,11 @@ impl<T: Float> Quaternion<T> {
 // PROPERTIES
 impl<T: Float> Quaternion<T> {
     pub fn conj (&self) -> Quaternion<T> {
-        return Quaternion::new(self.w, -self.i, -self.j, -self.k)
+        Quaternion::new(self.w, -self.i, -self.j, -self.k)
     }
 
     pub fn inverse (&self) -> Quaternion<T> {
-        return self.conj() / self.norm2();
+        self.conj() / self.norm2()
     }
 
     pub fn norm2 (&self) -> T {
@@ -72,12 +74,11 @@ impl<T: Float> Quaternion<T> {
     }
 
     pub fn vector (&self) -> NumArray<T,3> {
-        return NumArray([self.i, self.j, self.k]);
+        NumArray([self.i, self.j, self.k])
     }
 
-    pub fn sqrt (&self) -> Quaternion<T> {
-        let two = T::one() + T::one();
-
+    pub fn sqrt (&self) -> Quaternion<T> where T: NumericTwo {
+        let two = T::two();
         let norm = self.norm();
         let vec = self.vector();
 
@@ -98,6 +99,57 @@ impl<T: Float> Quaternion<T> {
     pub fn ln (&self) -> Quaternion<T> {
         let norm = self.norm();
         Quaternion::from_narray(norm.ln(), self.vector().unit() * (self.w / norm).acos())
+    }
+
+    pub fn rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
+        let one = T::one();
+        let r2 = self.w * self.w;
+        let i2 = self.i * self.i;
+        let j2 = self.j * self.j;
+        let k2 = self.k * self.k;
+        
+        let ir = self.i * self.w;
+        let ij = self.i * self.j;
+        let ik = self.i * self.k;
+
+        let jr = self.j * self.w;
+        let jk = self.j * self.k;
+        let kr = self.k * self.w;
+
+        let s = T::two() / (r2 + i2 + j2 + k2);
+
+        Matrix3::new([
+            NumArray([one - s * (j2 + k2), s * (ij - kr), s * (ik + jr)]),
+            NumArray([s * (ij + kr), one - s * (i2 + k2), s * (jk - ir)]),
+            NumArray([s * (ik - jr), s * (jk + ir), one - s * (i2 + j2)])
+        ])
+    }
+
+    pub fn rot_matrix_4 (&self) -> Matrix4<T> where T: NumericTwo {
+        let zero = T::zero();
+        let one = T::one();
+
+        let r2 = self.w * self.w;
+        let i2 = self.i * self.i;
+        let j2 = self.j * self.j;
+        let k2 = self.k * self.k;
+        
+        let ir = self.i * self.w;
+        let ij = self.i * self.j;
+        let ik = self.i * self.k;
+
+        let jr = self.j * self.w;
+        let jk = self.j * self.k;
+        let kr = self.k * self.w;
+
+        let s = T::two() / (r2 + i2 + j2 + k2);
+
+        Matrix4::new([
+            NumArray([one - s * (j2 + k2), s * (ij - kr), s * (ik + jr), zero]),
+            NumArray([s * (ij + kr), one - s * (i2 + k2), s * (jk - ir), zero]),
+            NumArray([s * (ik - jr), s * (jk + ir), one - s * (i2 + j2), zero]),
+            NumArray([zero, zero, zero, one])
+        ])
     }
 }
 

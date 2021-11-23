@@ -30,6 +30,10 @@ impl<T: Num, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn cols () -> usize {
         C
     }
+
+    pub fn flat (&self) -> Vec<T> where T: Clone {
+        self.0.iter().flat_map(|x| x.0.clone()).collect()
+    }
 }
 
 // TRANSPOSE

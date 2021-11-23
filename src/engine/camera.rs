@@ -3,8 +3,7 @@ use crate::{graph::window::Window, math::{array_ext::NumArray, matrix::{Matrix4}
 pub trait Camera {
     fn get_position (&mut self) -> &mut NumArray<f32, 3>;
     fn get_rotation (&mut self) -> &mut Quaternion32;
-
-    fn projection_matrix<T: Window> (&self, window: &T) -> Matrix4<f32>;
+    fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32>;
 }
 
 // PERSPECTIVE CAMERA
@@ -32,8 +31,8 @@ impl Camera for PerspectiveCamera {
         &mut self.rotation
     }
 
-    fn projection_matrix<T: Window> (&self, window: &T) -> Matrix4<f32> {
-        let ar = window.get_aspect_ratio();
+    fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32> {
+        let ar = (width as f32) / (height as f32);
         let alpha = (self.fov / 2.0).tan();
         
         let zp = self.z_far + self.z_near;
