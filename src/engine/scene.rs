@@ -19,8 +19,12 @@ impl<R: Renderer> Scene<R> {
         Scene { window, program, objects, camera: Box::new(camera), script: script }
     }
 
-    fn projection_matrix (&self) -> Matrix4<f32> {
+    pub fn projection_matrix (&self) -> Matrix4<f32> {
         let size = self.window.get_size();
         self.camera.projection_matrix(size.0, size.1)
+    }
+
+    pub fn camera_matrix (&self) -> Matrix4<f32> {
+        self.projection_matrix() * self.camera.view_matrix()
     }
 }

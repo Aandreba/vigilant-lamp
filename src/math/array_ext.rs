@@ -1,5 +1,5 @@
 use crate::extra::array_builder::ArrayBuilder;
-use std::{fmt::{Debug, Display}, ops::{Deref, Add, Sub, Mul, Div}};
+use std::{fmt::{Debug, Display}, ops::{Add, Deref, DerefMut, Div, Mul, Sub}};
 use num::{Num, Float};
 
 // NUMERIC ARRAY EXTENSION
@@ -70,6 +70,12 @@ impl<T: Num, const N: usize> Deref for NumArray<T,N> {
 
     fn deref(&self) -> &[T;N] {
         &self.0
+    }
+}
+
+impl<T: Num, const N: usize> DerefMut for NumArray<T,N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

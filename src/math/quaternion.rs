@@ -44,11 +44,6 @@ impl<T: Float> Quaternion<T> {
     pub fn zero_rotation () -> Quaternion<T> {
         Quaternion { w: T::one(), i: T::zero(), j: T::zero(), k: T::zero() }
     }
-
-    pub fn rotate (mut self, roll: T, pitch: T, yaw: T) where T: NumericTwo {
-        self = self * Quaternion::from_angles(roll, pitch, yaw);
-        self = self.unit();
-    }
 }
 
 // PROPERTIES
@@ -125,7 +120,31 @@ impl<T: Float> Quaternion<T> {
         ])
     }
 
-    pub fn rot_matrix_4 (&self) -> Matrix4<T> where T: NumericTwo {
+    pub fn point_rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
+        let one = T::one();
+        let two = T::two();
+
+        let r2 = two * self.w * self.w;
+        let i2 = two * self.i * self.i;
+        let j2 = two * self.j * self.j;
+        let k2 = two * self.k * self.k;
+        
+        let ir = two * self.i * self.w;
+        let ij = two * self.i * self.j;
+        let ik = two * self.i * self.k;
+
+        let jr = two * self.j * self.w;
+        let jk = two * self.j * self.k;
+        let kr = two * self.k * self.w;
+
+        Matrix3::new([
+            NumArray([one - k2 - j2, ij - kr, jr + ik]),
+            NumArray([ij + kr, one - k2 - i2, jk - ir]),
+            NumArray([ik - jr, jk + ir, one - j2 - r2])
+        ])
+    }
+
+    pub fn rot_matrix4 (&self) -> Matrix4<T> where T: NumericTwo {
         let zero = T::zero();
         let one = T::one();
 
@@ -148,6 +167,32 @@ impl<T: Float> Quaternion<T> {
             NumArray([one - s * (j2 + k2), s * (ij - kr), s * (ik + jr), zero]),
             NumArray([s * (ij + kr), one - s * (i2 + k2), s * (jk - ir), zero]),
             NumArray([s * (ik - jr), s * (jk + ir), one - s * (i2 + j2), zero]),
+            NumArray([zero, zero, zero, one])
+        ])
+    }
+
+    pub fn point_rot_matrix4 (&self) -> Matrix4<T> where T: NumericTwo {
+        let zero = T::zero();
+        let one = T::one();
+        let two = T::two();
+
+        let r2 = two * self.w * self.w;
+        let i2 = two * self.i * self.i;
+        let j2 = two * self.j * self.j;
+        let k2 = two * self.k * self.k;
+        
+        let ir = two * self.i * self.w;
+        let ij = two * self.i * self.j;
+        let ik = two * self.i * self.k;
+
+        let jr = two * self.j * self.w;
+        let jk = two * self.j * self.k;
+        let kr = two * self.k * self.w;
+
+        Matrix4::new([
+            NumArray([one - k2 - j2, ij - kr, jr + ik, zero]),
+            NumArray([ij + kr, one - k2 - i2, jk - ir, zero]),
+            NumArray([ik - jr, jk + ir, one - j2 - i2, zero]),
             NumArray([zero, zero, zero, one])
         ])
     }

@@ -21,7 +21,9 @@ impl Renderer for OpenGL {
     type MeshType = MeshGL;
 
     fn run (self, mut scene: Scene<Self>) {
+        scene.program.validate();
         let mut clock = Clock::new();
+
         match scene.script.start {
             Some(x) => x(&mut scene),
             None => ()
@@ -41,13 +43,13 @@ impl Renderer for OpenGL {
                     scene.program.bind();
                     
                     let delta = clock.delta();
-                    //let wm = scene.program.get_uniform("world_matrix").expect("Unexpected error");
-                    
                     match scene.script.update {
                         Some(x) => x(&mut scene, &delta),
                         None => ()
                     }
 
+                    scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
+                    
                     for elem in scene.objects.iter() {
                         scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
                         unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
@@ -138,27 +140,11 @@ impl Renderer for OpenGL {
             }
         }
 
-        // VALIDATE
-        unsafe {
-            glValidateProgram(id);
-            glGetProgramiv(id, GL_VALIDATE_STATUS, &mut success);
-
-            if success == 0 {
-                let mut log_string : Vec<u8> = Vec::with_capacity(1024);
-                let mut log_len = 0;
-
-                glGetProgramInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
-                log_string.set_len(log_len as usize);
-                panic!("{}", String::from_utf8(log_string).unwrap());
-            }
-        }
-
         // TODO UNIFORMS
         let uniform_cast : Vec<UniformGL> = uniforms.iter()
             .map(|x| UniformGL { name: String::from_str(x).unwrap(), id: unsafe { glGetUniformLocation(id, format!("{}{}", x, "\0").as_ptr() as *const _) } })
             .collect();
 
-        println!("{}: {}", uniform_cast[0].name, uniform_cast[0].id);
         ProgramGL { id, vertex, fragment, uniforms: uniform_cast }
     }
 
@@ -266,6 +252,24 @@ impl Program for ProgramGL {
         &self.fragment
     }
 
+    fn validate(&self) {
+        let mut success = 0;
+
+        unsafe {
+            glValidateProgram(self.id);
+            glGetProgramiv(self.id, GL_VALIDATE_STATUS, &mut success);
+
+            if success == 0 {
+                let mut log_string : Vec<u8> = Vec::with_capacity(1024);
+                let mut log_len = 0;
+
+                glGetProgramInfoLog(self.id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
+                log_string.set_len(log_len as usize);
+                panic!("{}", String::from_utf8(log_string).unwrap());
+            }
+        }
+    }
+
     fn get_uniforms(&self) -> &[Self::Uniform] {
         self.uniforms.as_ref()
     }
@@ -317,19 +321,19 @@ impl Program for ProgramGL {
 
     fn set_float_mat2(&self, key: &Self::Uniform, value: Matrix2<f32>) {
         unsafe {
-            glUniformMatrix2fv(key.id, 1, 0, value.flat().as_ptr())
+            glUniformMatrix2fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
     fn set_float_mat3(&self, key: &Self::Uniform, value: Matrix3<f32>) {
         unsafe {
-            glUniformMatrix3fv(key.id, 1, 0, value.flat().as_ptr())
+            glUniformMatrix3fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
     fn set_float_mat4(&self, key: &Self::Uniform, value: Matrix4<f32>) {
         unsafe {
-            glUniformMatrix4fv(key.id, 1, 0, value.flat().as_ptr())
+            glUniformMatrix4fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 

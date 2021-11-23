@@ -9,6 +9,7 @@ pub trait Program {
 
     fn get_vertex (&self) -> &Self::Vertex;
     fn get_fragment (&self) -> &Self::Fragment;
+    fn validate (&self);
 
     fn get_uniforms (&self) -> &[Self::Uniform];
     fn set_bool (&self, key: &Self::Uniform, value: bool); 

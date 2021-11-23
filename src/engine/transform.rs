@@ -35,6 +35,10 @@ impl Transform {
 
 // METHODS
 impl Transform {
+    pub fn set_scale (&mut self, value: f32) {
+        self.scale = NumArray([value, value, value])
+    }
+
     pub fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {
         self.rotation = self.rotation * Quaternion32::from_angles(roll, pitch, yaw);
         self.rotation = self.rotation.unit();
@@ -58,11 +62,7 @@ impl Transform {
         ])
     }
 
-    fn rotation_matrix (&self) -> Matrix4<f32> {
-        self.rotation.rot_matrix_4()
-    }
-
     pub fn matrix (&self) -> Matrix4<f32> {
-        self.position_matrix() * self.rotation_matrix() * self.scale_matrix()
+        self.position_matrix() * self.rotation.rot_matrix4() * self.scale_matrix()
     }
 }

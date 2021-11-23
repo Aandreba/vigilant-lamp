@@ -1,9 +1,40 @@
-use crate::{graph::window::Window, math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
+use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
 
 pub trait Camera {
-    fn get_position (&mut self) -> &mut NumArray<f32, 3>;
-    fn get_rotation (&mut self) -> &mut Quaternion32;
     fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32>;
+
+    fn get_position (&self) -> &NumArray<f32, 3>;
+    fn get_rotation (&self) -> &Quaternion32;
+
+    fn get_position_mut (&mut self) -> &mut NumArray<f32, 3>;
+    fn get_rotation_mut (&mut self) -> &mut Quaternion32;
+
+    fn set_position (&mut self, value: NumArray<f32, 3>);
+    fn set_rotation (&mut self, value: Quaternion32);
+
+    fn translate (&mut self, delta: NumArray<f32, 3>) {
+        self.set_position(*self.get_position() + delta)
+    }
+
+    fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {
+        let nw = *self.get_rotation() * Quaternion32::from_angles(roll, pitch, yaw);
+        self.set_rotation(nw.unit())
+    }
+
+    fn view_matrix (&self) -> Matrix4<f32> {
+        let position = Matrix4::new([
+            NumArray([1., 0., 0., -self.get_position().x()]),
+            NumArray([0., 1., 0., -self.get_position().y()]),
+            NumArray([0., 0., 1., -self.get_position().z()]),
+            NumArray([0., 0., 0., 1.])
+        ]);
+
+        position * self.get_rotation().point_rot_matrix4()
+    }
+
+    fn camera_matrix (&self, width: u32, height: u32) -> Matrix4<f32> {
+        self.projection_matrix(width, height) * self.view_matrix()
+    }
 }
 
 // PERSPECTIVE CAMERA
@@ -23,26 +54,45 @@ impl PerspectiveCamera {
 }
 
 impl Camera for PerspectiveCamera {
-    fn get_position (&mut self) -> &mut NumArray<f32, 3> {
+    fn get_position(&self) -> &NumArray<f32, 3> {
+        &self.position
+    }
+
+    fn get_rotation(&self) -> &Quaternion32 {
+        &self.rotation
+    }
+
+    fn get_position_mut (&mut self) -> &mut NumArray<f32, 3> {
         &mut self.position
     }
 
-    fn get_rotation (&mut self) -> &mut Quaternion32 {
+    fn get_rotation_mut (&mut self) -> &mut Quaternion32 {
         &mut self.rotation
     }
 
+    fn set_position(&mut self, value: NumArray<f32, 3>) {
+        self.position = value
+    }
+
+    fn set_rotation(&mut self, value: Quaternion32) {
+        self.rotation = value
+    }
+
     fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32> {
-        let ar = (width as f32) / (height as f32);
-        let alpha = (self.fov / 2.0).tan();
-        
+        let aspect = (width as f32) / (height as f32);
+        let h = (self.fov * 0.5).tan();
+
         let zp = self.z_far + self.z_near;
         let zm = self.z_far - self.z_near;
 
-        Matrix4::from_array([
-            [1. / (ar * alpha), 0., 0., 0.],
-            [0., 1. / alpha, 0., 0.],
-            [0., 0., -zp / zm, -(2. * self.z_far * self.z_near) / zm],
-            [0., 0., -1., 0.]
+        let rm00 = 1.0 / (h * aspect);
+        let rm11 = 1.0 / h;
+
+        Matrix4::new([
+            NumArray([rm00, 0., 0., 0.]),
+            NumArray([0., rm11, 0., 0.]),
+            NumArray([0., 0., -zp / zm, -2. * self.z_far * self.z_near / zm]),
+            NumArray([0., 0., -1., 0.])
         ])
     }
 }
