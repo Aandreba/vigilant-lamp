@@ -12,8 +12,8 @@ pub trait Camera {
     fn set_position (&mut self, value: NumArray<f32, 3>);
     fn set_rotation (&mut self, value: Quaternion32);
 
-    fn translate (&mut self, delta: NumArray<f32, 3>) {
-        self.set_position(*self.get_position() + delta)
+    fn translate (&mut self, x: f32, y: f32, z: f32) {
+        self.set_position(*self.get_position() + NumArray([x, y, z]))
     }
 
     fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {

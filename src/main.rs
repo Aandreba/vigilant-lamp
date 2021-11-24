@@ -1,7 +1,4 @@
-use std::{time::{Duration}};
-use engine::{clock::Clock};
-use glutin::{event_loop::{ControlFlow, EventLoop}};
-use crate::{engine::{camera::{PerspectiveCamera}, objectg::ObjectG, scene::{Scene}, script::Script}, graph::{mesh::{Mesh, MeshPrimitives}, renderer::Renderer, shaders::program::Program}, renderers::{opengl::{MeshGL, OpenGL}}};
+use crate::{engine::{camera::{PerspectiveCamera}, objectg::ObjectG, scene::{Scene}, script::Script}, graph::{mesh::{CUBE_INDICES, CUBE_VERTICES, MeshPrimitives}, renderer::Renderer}, renderers::{opengl::{OpenGL}}};
 
 mod math;
 mod graph;
@@ -17,11 +14,11 @@ fn main() {
         let sec = d.as_secs_f32();
         let obj = &mut s.objects[0];
 
-        obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
-        s.camera.rotate(0., sec / 12., 0.)
+        obj.transform.rotate(sec, sec * sec, sec);
+        //s.camera.translate(sec / 10., 0., 0.)
     });
 
-    let mesh = MeshPrimitives::circle::<OpenGL, 20>(&renderer);
+    let mesh = MeshPrimitives::cube(&renderer);
     let mut obj = ObjectG::new(mesh);
 
     obj.transform.position[2] -= 5.;
