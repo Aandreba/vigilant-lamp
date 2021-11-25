@@ -124,7 +124,6 @@ impl<T: Float> Quaternion<T> {
         let one = T::one();
         let two = T::two();
 
-        let r2 = two * self.w * self.w;
         let i2 = two * self.i * self.i;
         let j2 = two * self.j * self.j;
         let k2 = two * self.k * self.k;
@@ -140,7 +139,7 @@ impl<T: Float> Quaternion<T> {
         Matrix3::new([
             NumArray([one - k2 - j2, ij - kr, jr + ik]),
             NumArray([ij + kr, one - k2 - i2, jk - ir]),
-            NumArray([ik - jr, jk + ir, one - j2 - r2])
+            NumArray([ik - jr, jk + ir, one - j2 - i2])
         ])
     }
 
@@ -176,7 +175,6 @@ impl<T: Float> Quaternion<T> {
         let one = T::one();
         let two = T::two();
 
-        let r2 = two * self.w * self.w;
         let i2 = two * self.i * self.i;
         let j2 = two * self.j * self.j;
         let k2 = two * self.k * self.k;

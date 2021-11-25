@@ -44,7 +44,7 @@ impl Transform {
         self.rotation = self.rotation.unit();
     }
 
-    fn position_matrix (&self) -> Matrix4<f32> {
+    pub fn position_matrix (&self) -> Matrix4<f32> {
         Matrix4::new([
             NumArray([1., 0., 0., self.position.x()]),
             NumArray([0., 1., 0., self.position.y()]),
@@ -53,7 +53,7 @@ impl Transform {
         ])
     }
 
-    fn scale_matrix (&self) -> Matrix4<f32> {
+    pub fn scale_matrix (&self) -> Matrix4<f32> {
         Matrix4::new([
             NumArray([self.scale.x(), 0., 0., 0.]),
             NumArray([0., self.scale.y(), 0., 0.]),
