@@ -24,6 +24,10 @@ impl<T: Copy + Num, const N: usize> NumericArrayTraits<T,N> for [T;N] {
     }
 
     fn norm (&self) -> T where T: Float {
+        if N == 2 {
+            return self[0].hypot(self[1]);
+        }
+
         self.norm2().sqrt()
     }
 }

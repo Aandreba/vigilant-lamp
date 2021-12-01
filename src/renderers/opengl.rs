@@ -2,7 +2,7 @@ use core::panic;
 use std::{collections::HashMap, fmt::format, io::Read, ops::Deref, rc::Rc, str::FromStr, time::Duration};
 use gl33::{GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, VirtualKeyCode, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{camera::Camera, clock::Clock, input::keyboard::{KeyboardKey, KeyboardListener}, objectg::ObjectG, scene::{Scene}}, graph::{mesh::Mesh, renderer::{self, Renderer}, shaders::{program::{self, Program, Uniform}, shader::{FragmentShader, VertexShader}}, window::{Window}}, math::matrix::{Matrix2, Matrix3, Matrix4}};
+use crate::{engine::{camera::Camera, clock::Clock, input::{keyboard::{KeyboardKey, KeyboardListener}, mouse::MouseListener}, objectg::ObjectG, scene::{Scene}}, graph::{mesh::Mesh, renderer::{self, Renderer}, shaders::{program::{self, Program, Uniform}, shader::{FragmentShader, VertexShader}}, window::{Window}}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}};
 
 // RENDERER
 pub struct OpenGL {
@@ -19,13 +19,16 @@ impl Renderer for OpenGL {
     type WindowType = WinitWindow;
     type ProgramType = ProgramGL;
     type MeshType = MeshGL;
+
     type KeyboardListenerType = KeyboardListenerGL; 
+    type MouseListenerType = MouseListenerGL;
 
     fn run (self, mut scene: Scene<Self>) {
         scene.program.validate();
 
         let mut clock = Clock::new();
         let mut keyboard_listener = KeyboardListenerGL { pressed: [false; 161] };
+        let mut mouse_listener = MouseListenerGL { position: NumArray::zero() };
 
         match scene.script.start {
             Some(x) => x(&mut scene),
@@ -36,11 +39,13 @@ impl Renderer for OpenGL {
             *control_flow = ControlFlow::Wait;
             
             match event {
+                // CLOSE EVENT
                 Event::WindowEvent {
                     event: WindowEvent::CloseRequested,
                     window_id,
                 } if window_id == scene.window.context.window().id() => *control_flow = ControlFlow::Exit,
 
+                // KEYBOARD EVENT
                 Event::WindowEvent { event: WindowEvent::KeyboardInput { device_id: _, input, is_synthetic: _ }, window_id } => {
                     let keycode = input.virtual_keycode;
                     let key = match keycode {
@@ -51,13 +56,24 @@ impl Renderer for OpenGL {
                     keyboard_listener.pressed[key as usize] = input.state == ElementState::Pressed
                 },
 
+                // MOUSE EVENT
+                Event::WindowEvent { event: WindowEvent::CursorMoved { device_id: _, position, modifiers: _ }, window_id } => {
+                    let size = scene.window.get_size();
+                    let x = 2. * position.x / (size.0 as f64) - 1.;
+                    let y = 2. * position.y / (size.1 as f64) - 1.;
+                    
+                    // TODO FIX
+                    mouse_listener.position = NumArray([x as f32, y as f32])
+                }
+
+                // REDRAW EVENT (UPDATE)
                 Event::RedrawRequested(_) => {
                     scene.window.clear();
                     scene.program.bind();
                     
                     let delta = clock.delta();
                     match scene.script.update {
-                        Some(x) => x(&mut scene, &keyboard_listener, &delta),
+                        Some(x) => x(&mut scene, &keyboard_listener, &mouse_listener, &delta),
                         None => ()
                     }
 
@@ -71,6 +87,7 @@ impl Renderer for OpenGL {
                     scene.window.update()
                 },
 
+                // EXIT EVENT
                 Event::MainEventsCleared => {
                     scene.window.context.window().request_redraw();
                 }
@@ -641,5 +658,15 @@ pub struct KeyboardListenerGL {
 impl KeyboardListener for KeyboardListenerGL {
     fn is_pressed (&self, key: crate::engine::input::keyboard::KeyboardKey) -> bool {
         self.pressed[key as usize]
+    }
+}
+
+pub struct MouseListenerGL {
+    position: NumArray<f32, 2>
+}
+
+impl MouseListener for MouseListenerGL {
+    fn relative_position (&self) -> NumArray<f32, 2> {
+        self.position.clone()
     }
 }

@@ -29,7 +29,8 @@ pub trait Camera {
             NumArray([0., 0., 0., 1.])
         ]);
 
-        position * self.get_rotation().point_rot_matrix4()
+        self.get_rotation().rot_matrix4().T() * position
+        // position * self.get_rotation().point_rot_matrix4()
     }
 
     fn camera_matrix (&self, width: u32, height: u32) -> Matrix4<f32> {

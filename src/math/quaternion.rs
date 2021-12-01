@@ -2,7 +2,7 @@ use num::Float;
 use std::{fmt::{Display, Formatter, Result}, ops::{Add, Sub, Mul, Div}};
 
 use crate::{extra::num_two::NumericTwo, math::array_ext::{NumArray, NumericArrayTraits}};
-use super::matrix::{Matrix3, Matrix4, SquareMatrix};
+use super::matrix::{Matrix3, Matrix4};
 
 pub type Quaternion32 = Quaternion<f32>;
 pub type Quaternion64 = Quaternion<f64>;

@@ -1,5 +1,5 @@
 use std::{fs::File, io::Read, time::Duration};
-use crate::engine::{input::keyboard::KeyboardListener, objectg::ObjectG, scene::{Scene}};
+use crate::engine::{input::{keyboard::KeyboardListener, mouse::MouseListener}, objectg::ObjectG, scene::{Scene}};
 
 use super::{mesh::Mesh, shaders::program::Program, window::Window};
 
@@ -9,6 +9,7 @@ pub trait Renderer: Sized {
    type MeshType: Mesh;
 
    type KeyboardListenerType: KeyboardListener;
+   type MouseListenerType: MouseListener;
 
    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Self::WindowType;
    fn create_program (&self, vertex: <Self::ProgramType as Program>::Vertex, fragment: <Self::ProgramType as Program>::Fragment, uniforms: &[&str]) -> Self::ProgramType;

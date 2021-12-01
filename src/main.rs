@@ -1,4 +1,4 @@
-use crate::{engine::{camera::{PerspectiveCamera}, input::keyboard::{KeyboardKey, KeyboardListener}, objectg::ObjectG, scene::{Scene}, script::Script}, extra::color::Color, graph::{mesh::{CUBE_INDICES, CUBE_VERTICES, MeshPrimitives}, renderer::Renderer}, renderers::{opengl::{OpenGL}}};
+use crate::{engine::{camera::{PerspectiveCamera}, input::{keyboard::{KeyboardKey, KeyboardListener}, mouse::MouseListener}, objectg::ObjectG, scene::{Scene}, script::Script}, extra::color::Color, graph::{mesh::{CUBE_INDICES, CUBE_VERTICES, MeshPrimitives}, renderer::Renderer}, math::quaternion::Quaternion32, renderers::{opengl::{OpenGL}}};
 
 mod math;
 mod graph;
@@ -11,7 +11,7 @@ fn main() {
 
     let (mut renderer, mut scene) = opengl_basic_setup("Hello world", 900, 900);
     
-    let script = Script::of_update(|s : &mut Scene<OpenGL>, k, d| {
+    let script = Script::of_update(|s : &mut Scene<OpenGL>, k, m, d| {
         let sec = d.as_secs_f32();
         let obj = &mut s.objects[0];
 
@@ -19,17 +19,24 @@ fn main() {
             panic!()
         }
 
-        if k.is_pressed(KeyboardKey::UP) {
-            obj.transform.rotate(sec, 0., 0.)
-        } if k.is_pressed(KeyboardKey::DOWN) {
-            obj.transform.rotate(-sec, 0., 0.)
-        } if k.is_pressed(KeyboardKey::LEFT) {
-            obj.transform.rotate(0., -sec, 0.)
-        } if k.is_pressed(KeyboardKey::RIGHT) {
-            obj.transform.rotate(0., sec, 0.)
+        if k.is_pressed(KeyboardKey::W) {
+            s.camera.translate(0., 0., -sec)
+        } if k.is_pressed(KeyboardKey::A) {
+            s.camera.translate(-sec, 0., 0.)
+        } if k.is_pressed(KeyboardKey::S) {
+            s.camera.translate(0., 0., sec)
+        } if k.is_pressed(KeyboardKey::D) {
+            s.camera.translate(sec, 0., 0.)
+        } if k.is_pressed(KeyboardKey::SPACE) {
+            s.camera.translate(0., sec, 0.)
+        } if k.is_pressed(KeyboardKey::LEFT_SHIFT) {
+            s.camera.translate(0., -sec, 0.)
         }
 
-        //s.camera.translate(sec / 10., 0., 0.)
+        let mouse = m.relative_position();
+        println!("{}", mouse);
+
+        s.camera.set_rotation(Quaternion32::from_angles(mouse.y(), mouse.x(), 0.))
     });
 
     let mesh = MeshPrimitives::cube(&renderer);
