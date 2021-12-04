@@ -3,12 +3,41 @@ name = "RustMath"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 num = "0.4.0"
-gl33 = "0.2.1"
-glutin = "0.27.0"
 ndarray = "0.15.3"
 array-macro = "2.1.0"
 bytemuck = "1.7.2"
+instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
+
+# WASM DEPENDENCIES
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] } 
+js-sys = "0.3.55"
+yew = "0.18.0"
+game-loop = "0.8.0"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+gl33 = "0.2.1"
+glutin = "0.28.0"
+
+#[target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
+[dependencies.web-sys]
+version = "0.3.55"
+features = [
+  'Document',
+  'Element',
+  'HtmlCanvasElement',
+  'WebGlBuffer',
+  'WebGl2RenderingContext',
+  'WebGlProgram',
+  'WebGlShader',
+  'WebGlVertexArrayObject',
+  'WebGlUniformLocation',
+  'WebGlFramebuffer',
+  'Window'
+]

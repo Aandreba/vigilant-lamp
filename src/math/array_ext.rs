@@ -1,6 +1,7 @@
 use crate::extra::array_builder::ArrayBuilder;
 use std::{fmt::{Debug, Display}, ops::{Add, Deref, DerefMut, Div, Mul, Sub}};
 use num::{Num, Float};
+use wasm_bindgen::{describe::WasmDescribe, convert::{IntoWasmAbi, WasmSlice}};
 
 // NUMERIC ARRAY EXTENSION
 pub trait NumericArrayTraits<T: Copy + Num, const N: usize> {
@@ -207,4 +208,16 @@ impl<T: Copy + Num, const N: usize> Div<T> for NumArray<T,N> {
     }
 }
 
+impl<const N: usize> IntoWasmAbi for NumArray<f32,N> {
+    type Abi = WasmSlice;
+
+    fn into_abi (self) -> Self::Abi {
+        self.0.into_abi()
+    }
+}
+
 impl<T: Copy + Num, const N: usize> Copy for NumArray<T,N> {}
+impl<T: Copy + Num, const N: usize> WasmDescribe for NumArray<T,N> {
+    fn describe() {
+    }
+}

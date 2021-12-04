@@ -2,6 +2,8 @@ use crate::math::matrix::{Matrix2, Matrix3, Matrix4};
 
 use super::{shader::{FragmentShader, VertexShader}};
 
+pub type GenericProgram = dyn Program<Vertex = dyn VertexShader, Fragment = dyn FragmentShader, Uniform = dyn Uniform>;
+
 pub trait Program {
     type Vertex: VertexShader;
     type Fragment: FragmentShader;
@@ -195,9 +197,6 @@ pub trait Program {
 
         return true
     }
-
-    fn bind (&self);
-    fn unbind (&self);
 }
 
 pub trait Uniform {

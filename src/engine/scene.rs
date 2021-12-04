@@ -1,8 +1,6 @@
-use std::{rc::Rc, time::Duration};
-use glutin::{event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}};
-
-use crate::{graph::{renderer::Renderer, window::Window}, math::matrix::Matrix4, renderers::opengl::OpenGL};
-use super::{camera::{Camera}, clock::Clock, objectg::ObjectG, script::{self, Script}};
+use crate::{graph::{renderer::Renderer, window::{Window}}, math::matrix::Matrix4, renderers::webgl::{WebGL, WindowWGL, ProgramWGL}, engine::camera, extra::wasmable::Wasmable};
+use super::{camera::{Camera}, objectg::ObjectG, script::{Script}};
+use wasm_bindgen::{prelude::*, convert::{IntoWasmAbi, WasmSlice, WasmAbi, RefMutFromWasmAbi, FromWasmAbi}, describe::WasmDescribe};
 
 // SCENE
 pub struct Scene<R: Renderer> {
@@ -10,13 +8,12 @@ pub struct Scene<R: Renderer> {
     pub program: R::ProgramType,
     pub objects: Vec<ObjectG<R::MeshType>>,
     pub camera: Box<dyn Camera>,
-
     pub script: Script<R>
 }
 
 impl<R: Renderer> Scene<R> {
-    pub fn new<C: 'static + Camera> (window: R::WindowType, program: R::ProgramType, camera: C, objects: Vec<ObjectG<R::MeshType>>, script: Script<R>) -> Scene<R> {
-        Scene { window, program, objects, camera: Box::new(camera), script: script }
+    pub fn new<C: Camera + 'static> (window: R::WindowType, program: R::ProgramType, camera: C, objects: Vec<ObjectG<R::MeshType>>, script: Script<R>) -> Scene<R> {
+        Scene { window, program, objects, camera: Box::new(camera), script }
     }
 
     pub fn projection_matrix (&self) -> Matrix4<f32> {

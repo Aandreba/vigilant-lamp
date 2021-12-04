@@ -35,6 +35,7 @@ impl Renderer for OpenGL {
             None => ()
         }
 
+        self.bind_program(&scene.program);
         self.event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
             
@@ -69,7 +70,6 @@ impl Renderer for OpenGL {
                 // REDRAW EVENT (UPDATE)
                 Event::RedrawRequested(_) => {
                     scene.window.clear();
-                    scene.program.bind();
                     
                     let delta = clock.delta();
                     match scene.script.update {
@@ -83,7 +83,6 @@ impl Renderer for OpenGL {
                         unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                     }
 
-                    scene.program.unbind();
                     scene.window.update()
                 },
 
@@ -119,7 +118,7 @@ impl Renderer for OpenGL {
         }
     }
 
-    fn create_vertex_shader<R: Read> (&self, code: R) -> VertexGL {
+    fn create_vertex_shader (&self, code: &str) -> VertexGL {
         let id: Result<u32, String>;
 
         unsafe {
@@ -132,7 +131,7 @@ impl Renderer for OpenGL {
         }
     }
 
-    fn create_fragment_shader<R: Read> (&self, code: R) -> FragmentGL {
+    fn create_fragment_shader (&self, code: &str) -> FragmentGL {
         let id: Result<u32, String>;
         unsafe {
             id = self.create_shader(code, GL_FRAGMENT_SHADER);
@@ -207,6 +206,14 @@ impl Renderer for OpenGL {
             glPolygonMode(GL_FRONT_AND_BACK, if value { GL_LINE } else { GL_FILL })
         }
     }
+
+    fn bind_program (&self, program: &ProgramGL) {
+        glUseProgram(program.id)
+    }
+
+    fn unbind_program (&self, program: &ProgramGL) {
+        glUseProgram(0)
+    }
 }
 
 impl OpenGL {
@@ -229,16 +236,13 @@ impl OpenGL {
         id
     }
 
-    unsafe fn create_shader<R: Read> (&self, mut code: R, typ: GLenum) -> Result<u32, String> {
+    unsafe fn create_shader (&self, mut code: &str, typ: GLenum) -> Result<u32, String> {
         let id = glCreateShader(typ);
         if id == 0 {
             return Err(String::from_str("Error creating vertex").unwrap())
         }
-        
-        let mut code_string = String::new();
-        code.read_to_string(&mut code_string);
 
-        glShaderSource(id, 1, &code_string.as_bytes().as_ptr().cast(), &code_string.len().try_into().unwrap());
+        glShaderSource(id, 1, &code.as_bytes().as_ptr().cast(), &code.len().try_into().unwrap());
         glCompileShader(id);
 
         let mut success = 0;
@@ -391,14 +395,6 @@ impl Program for ProgramGL {
     fn set_double_mat4(&self, key: &Self::Uniform, value: Matrix4<f64>) {
         panic!("Unsuported operation")
     }
-
-    fn bind(&self) {
-        glUseProgram(self.id)
-    }
-
-    fn unbind(&self) {
-        glUseProgram(0)
-    }
 }
 
 // UNIFORMS
@@ -433,13 +429,14 @@ impl Mesh for MeshGL {
     }
 }
 
+
 // WINDOW
 pub struct WinitWindow {
     title: String,
     pub context: WindowedContext<PossiblyCurrent>
 }
 
-impl crate::graph::window::Window for WinitWindow {
+impl Window for WinitWindow {
     fn get_title (&self) -> &str {
         self.title.as_str()
     }
@@ -457,16 +454,17 @@ impl crate::graph::window::Window for WinitWindow {
         (size.width, size.height)
     }
 
-    fn clear(&self) {
-        unsafe {
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
-
-    fn update (&self) {
+    fn update (&mut self) {
         self.context.swap_buffers().expect("Unexpected error swaping buffers")
     }
+
+    fn clear (&self) {
+        unsafe {
+            glClear(gl33::GL_COLOR_BUFFER_BIT)
+        }
+    }
 }
+
 
 // lISTENERS
 const KEYBOARD_MAPPING : [KeyboardKey; 161] = [

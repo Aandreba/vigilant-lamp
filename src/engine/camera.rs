@@ -1,3 +1,7 @@
+use wasm_bindgen::{prelude::*, convert::WasmSlice};
+use wasm_bindgen::convert::{IntoWasmAbi, WasmAbi};
+
+use crate::extra::wasmable::Wasmable;
 use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
 
 pub trait Camera {

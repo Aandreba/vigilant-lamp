@@ -9,7 +9,6 @@ pub trait Window {
         return (size.0 as f32) / (size.1 as f32);
     }
 
-    fn close (&self) { panic!(); }
     fn clear (&self);
-    fn update (&self);
+    fn update (&mut self);
 }

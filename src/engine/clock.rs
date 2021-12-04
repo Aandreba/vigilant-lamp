@@ -1,19 +1,19 @@
-use std::time::{Duration, Instant};
+use std::{time::{Duration}};
+use instant::Instant;
 
-pub struct Clock {
-    last_call: Instant
-}
+#[derive(Clone, Copy)]
+pub struct Clock (Instant);
 
 impl Clock {
     pub fn new () -> Clock {
-        Clock { last_call: Instant::now() }
+        Clock(Instant::now())
     }
 
     pub fn delta (&mut self) -> Duration {
         let now = Instant::now();
-        let dt = now - self.last_call;
+        let dt = now - self.0;
 
-        self.last_call = now;
+        self.0 = now;
         dt
     }
 }
