@@ -1,8 +1,14 @@
 [package]
 name = "VigilantLamp"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
-license = ""
+license = "MIT OR Apache-2.0"
+description = "Multi-target game engine / graphics library"
+homepage = "https://github.com/Aandreba/vigilant-lamp"
+repository = "https://github.com/Aandreba/vigilant-lamp"
+readme = "README.md"
+keywords = ["game", "gamedev", "engine", "graphics"]
+categories = ["game-development", "game-engines", "graphics", "rendering", "rendering::engine", "wasm", "web-programming"]
 
 [lib]
 crate-type = ["cdylib"]
