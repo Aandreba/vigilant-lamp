@@ -1,6 +1,7 @@
 use std::{time::{Duration}};
 use instant::Instant;
 
+/// Usefull util to keep track of time deltas
 #[derive(Clone, Copy)]
 pub struct Clock (Instant);
 

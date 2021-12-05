@@ -1,8 +1,6 @@
-use std::{fs::File, io::Read, time::Duration};
-use crate::engine::{input::{keyboard::KeyboardListener, mouse::MouseListener}, objectg::ObjectG, scene::{Scene}, camera::Camera, clock::Clock};
-use super::{mesh::Mesh, shaders::program::{Program, GenericProgram}, window::Window};
-
-pub type GenericRenderer = dyn Renderer<WindowType = dyn Window, ProgramType = GenericProgram, MeshType = dyn Mesh, KeyboardListenerType = dyn KeyboardListener, MouseListenerType = dyn MouseListener>;
+use std::{fs::File, io::Read};
+use crate::engine::{input::{KeyboardListener, MouseListener}, Scene, Camera};
+use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
 pub trait Renderer: Sized {
    type WindowType: Window;

@@ -12,12 +12,13 @@ use web_sys::WebGlUniformLocation;
 use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGlProgram, WebGlShader};
 
-use crate::engine::clock::Clock;
-use crate::engine::input::keyboard::KeyboardListener;
-use crate::engine::input::mouse::MouseListener;
-use crate::engine::scene::Scene;
-use crate::graph::window::Window;
-use crate::graph::{renderer::Renderer, shaders::{program::{Program, Uniform}, shader::{VertexShader, FragmentShader}}, mesh::Mesh};
+use crate::engine::Clock;
+use crate::engine::input::KeyboardListener;
+use crate::engine::input::MouseListener;
+use crate::engine::Scene;
+use crate::graph::Window;
+use crate::graph::{Renderer, shaders::{Program, Uniform, VertexShader, FragmentShader}, Mesh};
+use crate::input::KeyboardKey;
 use crate::math::array_ext::NumArray;
 
 pub struct WebGL {
@@ -418,7 +419,7 @@ impl MouseListenerWGL {
 }
 
 impl KeyboardListener for KeyboardListenerWGL {
-    fn is_pressed (&self, key: crate::engine::input::keyboard::KeyboardKey) -> bool {
+    fn is_pressed (&self, key: KeyboardKey) -> bool {
         self.0[key as usize]
     }
 }

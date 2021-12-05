@@ -1,5 +1,6 @@
 use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
 
+/// Struct representing a 3d transformation of an element
 pub struct Transform {
     pub position: NumArray<f32,3>,
     pub rotation: Quaternion32,

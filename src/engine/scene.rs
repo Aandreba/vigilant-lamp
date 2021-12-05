@@ -1,7 +1,7 @@
-use crate::{graph::{renderer::Renderer, window::{Window}}, math::matrix::Matrix4, engine::camera};
+use crate::{graph::{Renderer, Window}, math::matrix::Matrix4, engine::camera};
 use super::{camera::{Camera}, objectg::ObjectG, script::{Script}};
 
-// SCENE
+/// Struct containing all the inforation needed by the renderer about the contents and characteristics of the scene
 pub struct Scene<R: Renderer> {
     pub window: R::WindowType,
     pub program: R::ProgramType,

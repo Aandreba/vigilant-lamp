@@ -1,7 +1,8 @@
-use std::{ptr::NonNull, time::Duration};
-use crate::{graph::{renderer::{Renderer, GenericRenderer}, window::Window, shaders::program::{Program, GenericProgram}, mesh::Mesh}};
-use super::{scene::Scene, input::{keyboard::KeyboardListener, mouse::MouseListener}};
+use std::{time::Duration};
+use crate::{graph::Renderer};
+use super::{scene::Scene};
 
+/// Element containing all the actions an element may execute at variuos stages og the execution process
 pub struct Script<R: Renderer> {
     pub start: Option<fn(&mut Scene<R>)>,
     pub update: Option<fn(&mut Scene<R>, &R::KeyboardListenerType, &R::MouseListenerType, &Duration)>

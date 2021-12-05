@@ -1,3 +1,4 @@
+/// Representation of a color
 pub struct Color (u32);
 
 // CONSTANTS

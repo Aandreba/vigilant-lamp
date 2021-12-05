@@ -1,3 +1,7 @@
-pub mod program;
-pub mod shader;
-pub mod uniform;
+mod program;
+mod shader;
+mod uniform;
+
+pub use program::{Program, Uniform};
+pub use shader::{FragmentShader, VertexShader};
+pub use uniform::UniformValue;

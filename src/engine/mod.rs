@@ -1,7 +1,14 @@
-pub mod camera;
-pub mod objectg;
-pub mod scene;
-pub mod transform;
-pub mod clock;
-pub mod script;
+mod camera;
+mod objectg;
+mod scene;
+mod transform;
+mod clock;
+mod script;
 pub mod input;
+
+pub use camera::{Camera, PerspectiveCamera};
+pub use objectg::ObjectG;
+pub use scene::Scene;
+pub use transform::Transform;
+pub use clock::Clock;
+pub use script::Script;

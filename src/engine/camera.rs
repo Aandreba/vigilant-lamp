@@ -1,5 +1,6 @@
 use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
 
+/// Element used to represent the view characteristics of a scene
 pub trait Camera {
     fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32>;
 
@@ -38,7 +39,7 @@ pub trait Camera {
     }
 }
 
-// PERSPECTIVE CAMERA
+/// Camera that represents a perspective view. It's the most common type of camera, since it's the best at emulating the way human vision works
 pub struct PerspectiveCamera {
     pub fov: f32,
     pub z_near: f32,

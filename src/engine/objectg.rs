@@ -1,6 +1,7 @@
 use crate::engine::transform::Transform;
-use crate::graph::mesh::{Mesh};
+use crate::graph::{Mesh};
 
+/// Element containing all needed information a game object
 pub struct ObjectG<T: Mesh> {    
     pub mesh: T,
     pub transform: Transform

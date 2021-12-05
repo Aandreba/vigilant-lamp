@@ -1,8 +1,8 @@
 use core::panic;
-use std::{collections::HashMap, fmt::format, io::Read, ops::Deref, rc::Rc, str::FromStr, time::Duration};
-use gl33::{GL_ARRAY_BUFFER, GL_COLOR_BUFFER_BIT, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
-use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, VirtualKeyCode, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{camera::Camera, clock::Clock, input::{keyboard::{KeyboardKey, KeyboardListener}, mouse::MouseListener}, objectg::ObjectG, scene::{Scene}}, graph::{mesh::Mesh, renderer::{self, Renderer}, shaders::{program::{self, Program, Uniform}, shader::{FragmentShader, VertexShader}}, window::{Window}}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}};
+use std::{str::FromStr};
+use gl33::{GL_ARRAY_BUFFER, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
+use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use crate::{engine::{Clock, input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}};
 
 // RENDERER
 pub struct OpenGL {
@@ -654,7 +654,7 @@ pub struct KeyboardListenerGL {
 }
 
 impl KeyboardListener for KeyboardListenerGL {
-    fn is_pressed (&self, key: crate::engine::input::keyboard::KeyboardKey) -> bool {
+    fn is_pressed (&self, key: KeyboardKey) -> bool {
         self.pressed[key as usize]
     }
 }
