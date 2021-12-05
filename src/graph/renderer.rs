@@ -1,5 +1,5 @@
 use std::{fs::File, io::Read};
-use crate::engine::{input::{KeyboardListener, MouseListener}, Scene, Camera};
+use crate::engine::{input::{KeyboardListener, MouseListener}, Scene};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
 pub trait Renderer: Sized {

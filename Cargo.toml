@@ -1,6 +1,6 @@
 [package]
 name = "VigilantLamp"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Multi-target game engine / graphics library"
@@ -21,19 +21,14 @@ ndarray = "0.15.3"
 array-macro = "2.1.0"
 bytemuck = "1.7.2"
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] } 
 js-sys = "0.3.55"
 yew = "0.18.0"
 game-loop = "0.8.0"
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 gl33 = "0.2.1"
 glutin = "0.28.0"
 
-[target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
-#[dependencies.web-sys]
+[dependencies.web-sys]
 version = "0.3.55"
 features = [
   'Document',
