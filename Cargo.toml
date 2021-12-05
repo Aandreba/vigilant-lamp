@@ -1,6 +1,6 @@
 [package]
 name = "vigilant_lamp"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Multi-target game engine / graphics library"
@@ -10,8 +10,8 @@ readme = "README.md"
 keywords = ["game", "gamedev", "engine", "graphics"]
 categories = ["game-development", "game-engines", "graphics", "rendering", "wasm"]
 
-[lib]
-crate-type = ["cdylib"]
+#[lib]
+#crate-type = ["cdylib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
