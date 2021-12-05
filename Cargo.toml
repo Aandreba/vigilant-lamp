@@ -8,7 +8,7 @@ homepage = "https://github.com/Aandreba/vigilant-lamp"
 repository = "https://github.com/Aandreba/vigilant-lamp"
 readme = "README.md"
 keywords = ["game", "gamedev", "engine", "graphics"]
-categories = ["game-development", "game-engines", "graphics", "rendering", "rendering::engine", "wasm", "web-programming"]
+categories = ["game-development", "game-engines", "graphics", "rendering", "wasm"]
 
 [lib]
 crate-type = ["cdylib"]
