@@ -1,2 +1,2 @@
-# vigilant-lamp
+# Vigilant Lamp
 A Rust Game Engine
