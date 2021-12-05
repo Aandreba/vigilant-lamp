@@ -1,7 +1,8 @@
 [package]
-name = "RustMath"
+name = "VigilantLamp"
 version = "0.1.0"
 edition = "2021"
+license = ""
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,7 +16,7 @@ array-macro = "2.1.0"
 bytemuck = "1.7.2"
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
 
-# WASM DEPENDENCIES
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] } 
 js-sys = "0.3.55"
 yew = "0.18.0"

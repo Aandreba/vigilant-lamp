@@ -20,18 +20,28 @@ use crate::graph::window::Window;
 use crate::graph::{renderer::Renderer, shaders::{program::{Program, Uniform}, shader::{VertexShader, FragmentShader}}, mesh::Mesh};
 use crate::math::array_ext::NumArray;
 
-#[wasm_bindgen]
 pub struct WebGL {
     window: web_sys::Window,
     context: Rc<WebGl2RenderingContext>,
     wireframe: bool
 }
 
-#[wasm_bindgen]
 pub struct WindowWGL {
     selector: String,
     canvas: HtmlCanvasElement,
     context: Rc<WebGl2RenderingContext>
+}
+
+impl WindowWGL {
+    pub fn new (context: &Rc<WebGl2RenderingContext>, selector: &str, canvas: HtmlCanvasElement) -> WindowWGL {
+        let result = WindowWGL {
+            context: Rc::clone(context), 
+            selector: String::from_str(selector).unwrap(), 
+            canvas
+        };
+
+        result
+    }
 }
 
 impl WebGL {
@@ -47,11 +57,7 @@ impl WebGL {
         let context : WebGl2RenderingContext = context.dyn_into::<WebGl2RenderingContext>().expect("Unexpected error");
 
         let renderer = WebGL { window, context: Rc::new(context), wireframe: false };
-        let mut window = WindowWGL {
-            context: Rc::clone(&renderer.context), 
-            selector: String::from_str(title).unwrap(), 
-            canvas
-        };
+        let window = WindowWGL::new(&renderer.context, title, canvas);
         
         renderer.context.clear_color(0., 0., 0., 1.);
         renderer.context.viewport(0, 0, window.get_width() as i32, window.get_height() as i32);
@@ -72,12 +78,12 @@ impl WebGL {
         Err(self.context.get_shader_info_log(&shader).unwrap_or_else(|| String::from("Unknown error creating shader")))
     }
 
-    fn create_buffer_f64 (&self, values: &[f64]) -> WebGlBuffer {
+    fn create_buffer_f32 (&self, values: &[f32]) -> WebGlBuffer {
         let buffer = self.context.create_buffer().expect("Error creating buffer");
         self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
         
         unsafe {
-            let array = js_sys::Float64Array::view(values);
+            let array = js_sys::Float32Array::view(values);
             self.context.buffer_data_with_array_buffer_view(
                 WebGl2RenderingContext::ARRAY_BUFFER,
                 &array,
@@ -151,10 +157,10 @@ impl Renderer for WebGL {
         let vao = self.context.create_vertex_array().expect("Error creating mesh");
         self.context.bind_vertex_array(Some(&vao));
 
-        let flat_vertices : Vec<f64> = vertices.iter().flat_map(|x| [x[0] as f64, x[1] as f64, x[2] as f64]).collect();
+        let flat_vertices : Vec<f32> = vertices.iter().flat_map(|x| *x).collect();
         let flat_indices : Vec<u32> = indices.iter().flat_map(|x| *x).collect();
 
-        let vertex = self.create_buffer_f64(flat_vertices.as_slice());
+        let vertex = self.create_buffer_f32(flat_vertices.as_slice());
         self.context.vertex_attrib_pointer_with_i32(0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
         self.context.enable_vertex_attrib_array(0);
         
@@ -196,8 +202,8 @@ impl Renderer for WebGL {
         scene.program.validate();
 
         let mut clock = Clock::new();
-        let mut keyboard_listener = KeyboardListenerWGL([false; 161]);
-        let mut mouse_listener = MouseListenerWGL(NumArray::zero());
+        let keyboard_listener = KeyboardListenerWGL([false; 161]);
+        let mouse_listener = MouseListenerWGL(NumArray::zero());
 
         match scene.script.start {
             Some(x) => x(&mut scene),
@@ -239,7 +245,7 @@ impl Window for WindowWGL {
     } 
 
     fn update (&mut self) {
-        
+        self.context.viewport(0, 0, self.get_width() as i32, self.get_height() as i32)
     }
 }
 
@@ -367,17 +373,14 @@ impl Program for ProgramWGL {
 }
 
 // SHADER
-#[wasm_bindgen]
 pub struct VertexWGL (WebGlShader);
 
-#[wasm_bindgen]
 pub struct FragmentWGL (WebGlShader);
 
 impl VertexShader for VertexWGL {}
 impl FragmentShader for FragmentWGL {}
 
 // MESH
-#[wasm_bindgen]
 pub struct MeshWGL {
     id: WebGlVertexArrayObject,
     vertices: WebGlBuffer,
@@ -398,7 +401,6 @@ impl Mesh for MeshWGL {
 }
 
 // LISTENERS
-#[wasm_bindgen]
 pub struct KeyboardListenerWGL ([bool;161]);
 
 impl KeyboardListenerWGL {
@@ -407,7 +409,6 @@ impl KeyboardListenerWGL {
     }
 }
 
-#[wasm_bindgen]
 pub struct MouseListenerWGL (NumArray<f32,2>);
 
 impl MouseListenerWGL {

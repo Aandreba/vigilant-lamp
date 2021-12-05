@@ -1,5 +1,4 @@
 use std::{io, str::FromStr, fmt::{self, Write}, ffi::CString, rc::Rc};
-
 use wasm_bindgen::{JsValue, convert::IntoWasmAbi, describe::WasmDescribe};
 
 #[doc(hidden)]
@@ -21,7 +20,8 @@ macro_rules! print {
 macro_rules! println {
     () => ();
     ($($arg:tt)*) => ({
-        $crate::_print_args(format_args!($($arg)*));
+        use crate::extra::wasm_mappings::_print_args;
+        _print_args(format_args!($($arg)*));
     })
 }
 
