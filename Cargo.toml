@@ -1,6 +1,6 @@
 [package]
-name = "VigilantLamp"
-version = "0.0.3"
+name = "vigilant_lamp"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Multi-target game engine / graphics library"

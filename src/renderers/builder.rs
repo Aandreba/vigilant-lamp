@@ -1,12 +1,7 @@
 use crate::{Renderer, Camera, Scene, Script};
-
-#[cfg(target_family = "wasm")]
 use crate::renderers::webgl::WebGL;
-
-#[cfg(not(target_family = "wasm"))]
 use crate::{opengl::OpenGL};
 
-#[cfg(not(target_family = "wasm"))]
 pub fn build_opengl<C: Camera + 'static> (title: &str, width: u32, height: u32, vsync: bool, camera: C) -> (OpenGL, Scene<OpenGL>) {
     let renderer = OpenGL::new();
     let window = renderer.create_window(title, width, height, vsync);
@@ -20,7 +15,6 @@ pub fn build_opengl<C: Camera + 'static> (title: &str, width: u32, height: u32, 
     (renderer, scene)
 }
 
-#[cfg(target_family = "wasm")]
 pub fn build_webgl<C: Camera + 'static> (selector: &str, camera: C) -> (WebGL, Scene<WebGL>) {
     let (renderer, window) = WebGL::new(selector);
 
