@@ -1,6 +1,5 @@
-use crate::{graph::{renderer::Renderer, window::{Window}}, math::matrix::Matrix4, renderers::webgl::{WebGL, WindowWGL, ProgramWGL}, engine::camera, extra::wasmable::Wasmable};
+use crate::{graph::{renderer::Renderer, window::{Window}}, math::matrix::Matrix4, engine::camera};
 use super::{camera::{Camera}, objectg::ObjectG, script::{Script}};
-use wasm_bindgen::{prelude::*, convert::{IntoWasmAbi, WasmSlice, WasmAbi, RefMutFromWasmAbi, FromWasmAbi}, describe::WasmDescribe};
 
 // SCENE
 pub struct Scene<R: Renderer> {

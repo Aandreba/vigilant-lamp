@@ -1,6 +1,5 @@
-use wasm_bindgen::{prelude::*, convert::IntoWasmAbi, describe::WasmDescribe};
 use std::{ptr::NonNull, time::Duration};
-use crate::{graph::{renderer::{Renderer, GenericRenderer}, window::Window, shaders::program::{Program, GenericProgram}, mesh::Mesh}, renderers::webgl::WebGL};
+use crate::{graph::{renderer::{Renderer, GenericRenderer}, window::Window, shaders::program::{Program, GenericProgram}, mesh::Mesh}};
 use super::{scene::Scene, input::{keyboard::KeyboardListener, mouse::MouseListener}};
 
 pub struct Script<R: Renderer> {

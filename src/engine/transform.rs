@@ -1,5 +1,4 @@
 use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
-use wasm_bindgen::prelude::*;
 
 pub struct Transform {
     pub position: NumArray<f32,3>,

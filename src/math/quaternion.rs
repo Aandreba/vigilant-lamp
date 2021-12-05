@@ -1,5 +1,4 @@
 use num::Float;
-use wasm_bindgen::{describe::WasmDescribe, convert::{IntoWasmAbi, WasmSlice}, JsValue};
 use std::{fmt::{Display, Formatter, Result}, ops::{Add, Sub, Mul, Div}};
 
 use crate::{extra::num_two::NumericTwo, math::array_ext::{NumArray, NumericArrayTraits}};

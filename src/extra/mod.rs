@@ -5,6 +5,5 @@ pub mod array_builder;
 pub mod num_two;
 pub mod color;
 
-//#[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 pub mod wasm_mappings;
-pub mod wasmable;
