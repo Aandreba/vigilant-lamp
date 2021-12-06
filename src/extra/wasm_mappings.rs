@@ -27,46 +27,6 @@ macro_rules! println {
 
 pub fn map_panic () {
     std::panic::set_hook(Box::new(|x| {
-        /*let payload = x.payload();
-        let location = x.location();
-
-        let file: &str;
-        let line: u32;
-        let col: u32;
-        let msg : &str;
-
-        match location {
-            Some(x) => {
-                file = x.file();
-                line = x.line();
-                col = x.column();
-            },
-
-            None => {
-                file = "";
-                line = 0;
-                col = 0;
-            }
-        }
-
-        match payload.downcast_ref::<&str>() {
-            Some(x) => msg = x,
-            None => match payload.downcast_ref::<String>() {
-                Some(x) => msg = x.as_str(),
-                None => msg = ""
-            }
-        }
-
-        let mut error = String::from_str("Error in '").unwrap();
-        error.push_str(file);
-        error.push_str("' at line ");
-        error.push_str(line.to_string().as_str());
-        error.push(':');
-        error.push_str(col.to_string().as_str());
-        error.push('\n');
-        error.push_str(msg);
-
-        web_sys::console::error_1(&error.as_str().into())*/
         unsafe {
             web_sys::console::error_1(&x.to_string().as_str().into())
         }
