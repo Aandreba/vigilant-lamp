@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -275,6 +276,20 @@ impl Renderer for WebGL {
 
                 Ok(())
             }
+        }
+    }
+
+    fn get_property(&self, key: &str) -> Option<Box<dyn Any>> {
+        fn wrap<T: Any> (value: T) -> Option<Box<dyn Any>> {
+            Some(Box::new(value))
+        }
+
+        match key {
+            "scroll_x" => wrap(self.window.scroll_x()),
+            "scroll_y" => wrap(self.window.scroll_y()),
+            "pixel_ratio" => wrap(self.window.device_pixel_ratio()),
+            "orientation" => wrap(self.window.orientation()),
+            _ => None
         }
     }
 }

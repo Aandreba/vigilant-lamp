@@ -225,6 +225,10 @@ impl Renderer for OpenGL {
     fn unbind_program (&self, program: &ProgramGL) {
         glUseProgram(0)
     }
+
+    fn get_property(&self, key: &str) -> Option<Box<dyn std::any::Any>> {
+        None
+    }
 }
 
 impl OpenGL {

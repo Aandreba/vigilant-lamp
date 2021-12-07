@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, any::Any};
 use crate::engine::{input::{KeyboardListener, MouseListener}, Scene};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
@@ -62,4 +62,7 @@ pub trait Renderer: Sized {
 
       self.unbind_program(&scene.program);
    }
+
+   /// Method that allows to retrieve preperties that are renderer specific, such as scroll position
+   fn get_property (&self, key: &str) -> Option<Box<dyn Any>>;
 }
