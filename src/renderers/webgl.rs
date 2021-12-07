@@ -2,9 +2,12 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 use game_loop::game_loop;
+use js_sys::JsString;
+use js_sys::Object;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use web_sys::Element;
 use web_sys::HtmlCanvasElement;
 use web_sys::WebGl2RenderingContext;
 use web_sys::WebGlBuffer;
@@ -12,6 +15,9 @@ use web_sys::WebGlUniformLocation;
 use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGlProgram, WebGlShader};
 
+use crate::ErrorType;
+use crate::FlatMap;
+use crate::Flattern;
 use crate::engine::Clock;
 use crate::engine::input::KeyboardListener;
 use crate::engine::input::MouseListener;
@@ -46,104 +52,148 @@ impl WindowWGL {
 }
 
 impl WebGL {
-    pub fn new (title: &str) -> (WebGL, WindowWGL) {
+    pub fn new (title: &str) -> Result<(WebGL, WindowWGL), JsValue> {
         let window : web_sys::Window = web_sys::window().unwrap();
         let document : web_sys::Document = window.document().unwrap();
         let config = JsValue::from_serde("{ antialias: false }").unwrap();
 
-        let element = document.query_selector(title).expect("Unexpected error").expect("DOM Element not found");
-        let canvas: HtmlCanvasElement = element.dyn_into::<HtmlCanvasElement>().expect("Unexpected error");
+        let element : Result<Element, JsValue> = document.query_selector(title)
+            .flattern_single(|| JsValue::from_str("Element not found"));
 
-        let context = canvas.get_context_with_context_options("webgl2", &config).unwrap().unwrap();
-        let context : WebGl2RenderingContext = context.dyn_into::<WebGl2RenderingContext>().expect("Unexpected error");
+        let canvas : Result<HtmlCanvasElement, JsValue> = element
+            .flat_map(|x| x.dyn_into::<HtmlCanvasElement>())
+            .map_err(|e| e.map_to_first(|x| JsValue::from_str("Element provided isn't a canvas")));
 
-        let renderer = WebGL { window, context: Rc::new(context), wireframe: false };
-        let window = WindowWGL::new(&renderer.context, title, canvas);
-        
-        renderer.context.clear_color(0., 0., 0., 1.);
-        renderer.context.viewport(0, 0, window.get_width() as i32, window.get_height() as i32);
-        
-        (renderer, window)
+        match canvas {
+            Err(x) => Err(x),
+            Ok(canvas) => {
+                let context : Result<WebGl2RenderingContext, JsValue> = canvas
+                    .get_context_with_context_options("webgl2", &config)
+                    .flattern_single(|| JsValue::from_str("WebGL v2 not available in yout browser"))
+                    .flat_map(|x| x.dyn_into::<WebGl2RenderingContext>())
+                    .map_err(|e| e.map_to_first(|x| JsValue::from_str("Context provided isn't WebGL v2")));
+                
+                match context {
+                    Err(x) => Err(x),
+                    Ok(context) => {
+                        let renderer = WebGL { window, context: Rc::new(context), wireframe: false };
+                        let window = WindowWGL::new(&renderer.context, title, canvas);
+                        
+                        renderer.context.clear_color(0., 0., 0., 1.);
+                        renderer.context.viewport(0, 0, window.get_width() as i32, window.get_height() as i32);
+                        
+                        Ok((renderer, window))
+                    }
+                }
+            }
+        }
     }
 
-    fn create_shader (&self, typ: u32, code: &str) -> Result<WebGlShader, String> {
-        let shader = self.context.create_shader(typ).expect("Error creating shader");
-        self.context.shader_source(&shader, code);
-        self.context.compile_shader(&shader);
+    fn create_shader (&self, typ: u32, code: &str) -> Result<WebGlShader, JsValue> {
+        let shader = self.context.create_shader(typ);
+        match shader {
+            None => Err(JsValue::from_str("Error creating creating shader")),
+            Some(shader) => {
+                self.context.shader_source(&shader, code);
+                self.context.compile_shader(&shader);
 
-        let compile_status = self.context.get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS).as_bool().unwrap_or(false);
-        if compile_status { 
-            return Ok(shader)
+                let compile_status = self.context.get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS).as_bool().unwrap_or(false);
+                if compile_status { 
+                    return Ok(shader)
+                }
+
+                let info : Option<String> = self.context.get_shader_info_log(&shader);
+                match info {
+                    None => Err(JsValue::from_str("Unknown error creating shader")),
+                    Some(x) => Err(JsValue::from_str(x.as_str()))
+                }
+            }
         }
-
-        Err(self.context.get_shader_info_log(&shader).unwrap_or_else(|| String::from("Unknown error creating shader")))
     }
 
-    fn create_buffer_f32 (&self, values: &[f32]) -> WebGlBuffer {
-        let buffer = self.context.create_buffer().expect("Error creating buffer");
-        self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
+    fn create_buffer_f32 (&self, values: &[f32]) -> Result<WebGlBuffer, JsValue> {
+        let buffer : Option<WebGlBuffer> = self.context.create_buffer();
+        match buffer {
+            None => Err(JsValue::from_str("Error creating buffer")),
+            Some(buffer) => {
+                self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
         
-        unsafe {
-            let array = js_sys::Float32Array::view(values);
-            self.context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ARRAY_BUFFER,
-                &array,
-                WebGl2RenderingContext::STATIC_DRAW)
+                unsafe {
+                    let array = js_sys::Float32Array::view(values);
+                    self.context.buffer_data_with_array_buffer_view(
+                        WebGl2RenderingContext::ARRAY_BUFFER,
+                        &array,
+                        WebGl2RenderingContext::STATIC_DRAW)
+                }
+        
+                Ok(buffer)
+            }
         }
-
-        buffer
     }
 
-    fn create_buffer_u32 (&self, values: &[u32]) -> WebGlBuffer {
-        let buffer = self.context.create_buffer().expect("Error creating buffer");
-        self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&buffer));
+    fn create_buffer_u32 (&self, values: &[u32]) -> Result<WebGlBuffer, JsValue> {
+        let buffer : Option<WebGlBuffer> = self.context.create_buffer();
+        match buffer {
+            None => Err(JsValue::from_str("Error creating buffer")),
+            Some(buffer) => {
+                self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
         
-        unsafe {
-            let array = js_sys::Uint32Array::view(values);
-            self.context.buffer_data_with_array_buffer_view(
-                WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
-                &array,
-                WebGl2RenderingContext::STATIC_DRAW)
+                unsafe {
+                    let array = js_sys::Uint32Array::view(values);
+                    self.context.buffer_data_with_array_buffer_view(
+                        WebGl2RenderingContext::ARRAY_BUFFER,
+                        &array,
+                        WebGl2RenderingContext::STATIC_DRAW)
+                }
+        
+                Ok(buffer)
+            }
         }
-
-        buffer
     }
 }
 
 impl Renderer for WebGL {
+    type ErrorType = JsValue;
     type WindowType = WindowWGL;
     type ProgramType = ProgramWGL;
     type MeshType = MeshWGL;
     type KeyboardListenerType = KeyboardListenerWGL;
     type MouseListenerType = MouseListenerWGL;
 
-    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> WindowWGL {
-        WebGL::new(title).1
+    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Result<WindowWGL, JsValue> {
+        WebGL::new(title).map(|x| x.1)
     }
 
-    fn create_program (&self, vertex: VertexWGL, fragment: FragmentWGL, uniforms: &[&str]) -> ProgramWGL {
-        let program = self.context.create_program().expect("Error creating program");
-        self.context.attach_shader(&program, &vertex.0);
-        self.context.attach_shader(&program, &fragment.0);
-        self.context.link_program(&program);
+    fn create_program (&self, vertex: VertexWGL, fragment: FragmentWGL, uniforms: &[&str]) -> Result<ProgramWGL, JsValue> {
+        let program : Option<WebGlProgram> = self.context.create_program();
+        match program {
+            None => Err(JsValue::from_str("Error creating program")),
+            Some(program) => {
+                self.context.attach_shader(&program, &vertex.0);
+                self.context.attach_shader(&program, &fragment.0);
+                self.context.link_program(&program);
 
-        let uniform_map : Vec<UniformWGL> = uniforms.iter()
-            .map(|x| UniformWGL { id: self.context.get_uniform_location(&program, x), name: String::from_str(*x).unwrap() }).collect();
-        
-        let link_status = self.context
-        .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
-        .as_bool()
-        .unwrap_or(false);
+                let uniform_map : Vec<UniformWGL> = uniforms.iter()
+                    .map(|x| UniformWGL { id: self.context.get_uniform_location(&program, x), name: String::from_str(*x).unwrap() }).collect();
+                
+                let link_status = self.context
+                .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
+                .as_bool()
+                .unwrap_or(false);
 
-        if link_status {
-            return ProgramWGL { context: Rc::clone(&self.context), program, vertex, fragment, uniforms: uniform_map }
+                if link_status {
+                    return Ok(ProgramWGL { context: Rc::clone(&self.context), program, vertex, fragment, uniforms: uniform_map })
+                }
+                
+                let err : Option<String> = self.context
+                .get_program_info_log(&program);
+
+                match err {
+                    None => Err(JsValue::from_str("Unknown error creating program object")),
+                    Some(x) => Err(JsValue::from_str(x.as_str()))
+                }
+            }
         }
-        
-        let err = self.context
-        .get_program_info_log(&program)
-        .unwrap_or_else(|| String::from("Unknown error creating program object"));
-
-        panic!("{}", err)
     }
 
     fn bind_program (&self, program: &Self::ProgramType) {
@@ -154,19 +204,28 @@ impl Renderer for WebGL {
         self.context.use_program(None)
     }
 
-    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> MeshWGL {
-        let vao = self.context.create_vertex_array().expect("Error creating mesh");
-        self.context.bind_vertex_array(Some(&vao));
+    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<MeshWGL, JsValue> {
+        let vao : Option<WebGlVertexArrayObject> = self.context.create_vertex_array();
+        match vao {
+            None => Err(JsValue::from_str("Error creating mesh")),
+            Some(vao) => {
+                self.context.bind_vertex_array(Some(&vao));
+                let flat_vertices : Vec<f32> = vertices.iter().flat_map(|x| *x).collect();
+                let vertex = self.create_buffer_f32(flat_vertices.as_slice());
+                
+                match vertex {
+                    Err(x) => Err(x),
+                    Ok(vertex) => {
+                        self.context.vertex_attrib_pointer_with_i32(0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
+                        self.context.enable_vertex_attrib_array(0);
 
-        let flat_vertices : Vec<f32> = vertices.iter().flat_map(|x| *x).collect();
-        let flat_indices : Vec<u32> = indices.iter().flat_map(|x| *x).collect();
-
-        let vertex = self.create_buffer_f32(flat_vertices.as_slice());
-        self.context.vertex_attrib_pointer_with_i32(0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
-        self.context.enable_vertex_attrib_array(0);
-        
-        let index = self.create_buffer_u32(flat_indices.as_slice());
-        MeshWGL { id: vao, vertices: vertex, indices: index, vertex_count: vertices.len(), index_count: indices.len() }
+                        let flat_indices : Vec<u32> = indices.iter().flat_map(|x| *x).collect();
+                        self.create_buffer_u32(flat_indices.as_slice())
+                            .map(|index| MeshWGL { id: vao, vertices: vertex, indices: index, vertex_count: vertices.len(), index_count: indices.len() })
+                    }
+                }
+            }
+        }
     }
 
     fn draw_mesh (&self, mesh: &MeshWGL) {
@@ -179,47 +238,44 @@ impl Renderer for WebGL {
         self.context.bind_vertex_array(None);
     }
 
-    fn create_vertex_shader (&self, code: &str) -> VertexWGL {
-        let shader = self.create_shader(WebGl2RenderingContext::VERTEX_SHADER, code);
-        match shader {
-            Ok(x) => return VertexWGL(x),
-            Err(x) => panic!("{}", x)
-        }
+    fn create_vertex_shader (&self, code: &str) -> Result<VertexWGL, JsValue> {
+        self.create_shader(WebGl2RenderingContext::VERTEX_SHADER, code).map(|x| VertexWGL(x))
     }
 
-    fn create_fragment_shader (&self, code: &str) -> FragmentWGL {
-        let shader = self.create_shader(WebGl2RenderingContext::FRAGMENT_SHADER, code);
-        match shader {
-            Ok(x) => return FragmentWGL(x),
-            Err(x) => panic!("{}", x)
-        }
+    fn create_fragment_shader (&self, code: &str) -> Result<FragmentWGL, JsValue> {
+        self.create_shader(WebGl2RenderingContext::FRAGMENT_SHADER, code).map(|x| FragmentWGL(x))
     }
 
     fn set_wireframe (&mut self, value: bool) {
         self.wireframe = value
     }
     
-    fn run (self, mut scene: Scene<WebGL>) {
-        scene.program.validate();
+    fn run (self, mut scene: Scene<WebGL>) -> Result<(), JsValue> {
+        match scene.program.validate() {
+            Err(x) => Err(x),
+            Ok(_) => {
+                let mut clock = Clock::new();
+                let keyboard_listener = KeyboardListenerWGL([false; 161]);
+                let mouse_listener = MouseListenerWGL(NumArray::zero());
 
-        let mut clock = Clock::new();
-        let keyboard_listener = KeyboardListenerWGL([false; 161]);
-        let mouse_listener = MouseListenerWGL(NumArray::zero());
+                match scene.script.start {
+                    Some(x) => x(&mut scene),
+                    None => ()
+                }
 
-        match scene.script.start {
-            Some(x) => x(&mut scene),
-            None => ()
-        }
+                game_loop((self, scene, clock, keyboard_listener, mouse_listener), 240, 0.1, move |g| {
+                    let delta = clock.delta();
+                    match g.game.1.script.update {
+                        Some(x) => x(&mut g.game.1, &g.game.3, &g.game.4, &delta),
+                        None => ()
+                    }
+                }, |g| {
+                    g.game.0.render(&mut g.game.1)
+                });
 
-        game_loop((self, scene, clock, keyboard_listener, mouse_listener), 240, 0.1, move |g| {
-            let delta = clock.delta();
-            match g.game.1.script.update {
-                Some(x) => x(&mut g.game.1, &g.game.3, &g.game.4, &delta),
-                None => ()
+                Ok(())
             }
-        }, |g| {
-            g.game.0.render(&mut g.game.1)
-        });
+        }
     }
 }
 
@@ -274,6 +330,7 @@ pub struct ProgramWGL {
 }
 
 impl Program for ProgramWGL {
+    type Error = JsValue;
     type Vertex = VertexWGL;
     type Fragment = FragmentWGL;
     type Uniform = UniformWGL;
@@ -286,7 +343,7 @@ impl Program for ProgramWGL {
         &self.fragment
     }
 
-    fn validate (&self) {
+    fn validate (&self) -> Result<(), JsValue> {
         self.context.validate_program(&self.program);
 
         let success = self.context
@@ -295,12 +352,14 @@ impl Program for ProgramWGL {
         .unwrap_or(false);
         
         if !success {
-            let err = self.context
-                .get_program_info_log(&self.program)
-                .unwrap_or_else(|| String::from("Unknown error creating program object"));
-            
-            panic!("{}", err)
+            let err : Option<String> = self.context.get_program_info_log(&self.program);
+            match err {
+                None => return Err(JsValue::from_str("Unknown error creating program object")),
+                Some(x) => return Err(JsValue::from_str(x.as_str()))
+            }
         }
+
+        Ok(())
     }
 
     fn get_uniforms (&self) -> &[UniformWGL] {

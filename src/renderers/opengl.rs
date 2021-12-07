@@ -1,8 +1,8 @@
 use core::panic;
 use std::{str::FromStr};
-use gl33::{GL_ARRAY_BUFFER, GL_COMPILE_STATUS, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}};
+use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}, GL_COMPILE_STATUS};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{Clock, input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}};
+use crate::{engine::{Clock, input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}, FlatMap};
 
 // RENDERER
 pub struct OpenGL {
@@ -16,6 +16,7 @@ impl OpenGL {
 }
 
 impl Renderer for OpenGL {
+    type ErrorType = String;
     type WindowType = WinitWindow;
     type ProgramType = ProgramGL;
     type MeshType = MeshGL;
@@ -23,8 +24,11 @@ impl Renderer for OpenGL {
     type KeyboardListenerType = KeyboardListenerGL; 
     type MouseListenerType = MouseListenerGL;
 
-    fn run (self, mut scene: Scene<Self>) {
-        scene.program.validate();
+    fn run (self, mut scene: Scene<Self>) -> Result<(), String> {
+        let validate = scene.program.validate();
+        if validate.is_err() {
+            return validate
+        }
 
         let mut clock = Clock::new();
         let mut keyboard_listener = KeyboardListenerGL { pressed: [false; 161] };
@@ -95,15 +99,21 @@ impl Renderer for OpenGL {
         })
     }
 
-    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Self::WindowType {
+    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Result<Self::WindowType, String> {
         let window = WindowBuilder::new().with_title(title).with_inner_size(LogicalSize::new(width, height));
         let context : WindowedContext<PossiblyCurrent>;
+
         unsafe {
-            context = ContextBuilder::new()
-                    .with_gl(GlRequest::Specific(Api::OpenGl, (3,3)))
-                    .with_vsync(vsync)
-                    .build_windowed(window, &self.event_loop)
-                    .unwrap().make_current().unwrap();
+            let builder = ContextBuilder::new()
+            .with_gl(GlRequest::Specific(Api::OpenGl, (3,3)))
+            .with_vsync(vsync)
+            .build_windowed(window, &self.event_loop)
+            .flat_map(|x| x.make_current().map_err(|z| z.1));
+
+            match builder {
+                Ok(x) => context = x,
+                Err(x) => return Err(x.to_string())
+            }
         }
 
         unsafe {
@@ -114,11 +124,11 @@ impl Renderer for OpenGL {
             });
             
             glClearColor(0., 0., 0., 1.);
-            WinitWindow { title: String::from_str(title).unwrap(), context }
+            Ok(WinitWindow { title: String::from_str(title).unwrap(), context })
         }
     }
 
-    fn create_vertex_shader (&self, code: &str) -> VertexGL {
+    fn create_vertex_shader (&self, code: &str) -> Result<VertexGL, String> {
         let id: Result<u32, String>;
 
         unsafe {
@@ -126,27 +136,27 @@ impl Renderer for OpenGL {
         }
         
         match id {
-            Ok(x) => return VertexGL(x),
-            Err(x) => panic!("Vertex shader: {}", x)
+            Ok(x) => Ok(VertexGL(x)),
+            Err(x) => Err(x)
         }
     }
 
-    fn create_fragment_shader (&self, code: &str) -> FragmentGL {
+    fn create_fragment_shader (&self, code: &str) -> Result<FragmentGL, String> {
         let id: Result<u32, String>;
         unsafe {
             id = self.create_shader(code, GL_FRAGMENT_SHADER);
         }
 
         match id {
-            Ok(x) => return FragmentGL(x),
-            Err(x) => panic!("Fragment shader: {}", x)
+            Ok(x) => Ok(FragmentGL(x)),
+            Err(x) => Err(x)
         }
     }
 
-    fn create_program (&self, vertex: VertexGL, fragment: FragmentGL, uniforms: &[&str]) -> ProgramGL {
+    fn create_program (&self, vertex: VertexGL, fragment: FragmentGL, uniforms: &[&str]) -> Result<ProgramGL, String> {
         let id  = glCreateProgram();
         if id == 0 {
-            panic!("Error creating program");
+            return Err("Error creating program".to_string())
         }
 
         glAttachShader(id, vertex.0);
@@ -164,7 +174,7 @@ impl Renderer for OpenGL {
 
                 glGetProgramInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
                 log_string.set_len(log_len as usize);
-                panic!("{}", String::from_utf8(log_string).unwrap());
+                return Err(String::from_utf8(log_string).unwrap())
             }
         }
 
@@ -173,14 +183,15 @@ impl Renderer for OpenGL {
             .map(|x| UniformGL { name: String::from_str(x).unwrap(), id: unsafe { glGetUniformLocation(id, format!("{}{}", x, "\0").as_ptr() as *const _) } })
             .collect();
 
-        ProgramGL { id, vertex, fragment, uniforms: uniform_cast }
+        Ok(ProgramGL { id, vertex, fragment, uniforms: uniform_cast })
     }
 
-    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> MeshGL {
+    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<MeshGL, String> {
         let mut vao = 0;
         unsafe { glGenVertexArrays(1, &mut vao); }
+
         if vao == 0 {
-            panic!("Error creating mesh");
+           return Err("Error creating mesh".to_string())
         }
 
         glBindVertexArray(vao);
@@ -194,7 +205,7 @@ impl Renderer for OpenGL {
             idx = self.buffer_data( GL_ELEMENT_ARRAY_BUFFER, bytemuck::cast_slice(indices));
         }
 
-        MeshGL { id: vao, vertices: vbo, indices: idx, vertex_count: vertices.len(), index_count: indices.len() }
+        Ok(MeshGL { id: vao, vertices: vbo, indices: idx, vertex_count: vertices.len(), index_count: indices.len() })
     }
 
     fn draw_mesh (&self, mesh: &MeshGL) {
@@ -255,12 +266,11 @@ impl OpenGL {
             glGetShaderInfoLog(id, 1024, &mut log_len, log_string.as_mut_ptr());
             log_string.set_len(log_len as usize);
 
-            return Err(String::from_utf8(log_string).unwrap());
+            return Err(String::from_utf8(log_string).unwrap())
         }
         
         return Ok(id);
     }
-
 }
 
 // SHADERS
@@ -279,6 +289,7 @@ pub struct ProgramGL {
 }
 
 impl Program for ProgramGL {
+    type Error = String;
     type Vertex = VertexGL;
     type Fragment = FragmentGL;
     type Uniform = UniformGL;
@@ -291,7 +302,7 @@ impl Program for ProgramGL {
         &self.fragment
     }
 
-    fn validate(&self) {
+    fn validate(&self) -> Result<(),String> {
         let mut success = 0;
 
         unsafe {
@@ -304,9 +315,11 @@ impl Program for ProgramGL {
 
                 glGetProgramInfoLog(self.id, 1024, &mut log_len, log_string.as_mut_ptr().cast());
                 log_string.set_len(log_len as usize);
-                panic!("{}", String::from_utf8(log_string).unwrap());
+                return Err(String::from_utf8(log_string).unwrap())
             }
         }
+
+        Ok(())
     }
 
     fn get_uniforms(&self) -> &[Self::Uniform] {

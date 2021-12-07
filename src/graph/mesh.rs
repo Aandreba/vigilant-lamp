@@ -54,18 +54,20 @@ pub trait Mesh {
     fn get_index_count (&self) -> usize;
 }
 
+type ComputedMesh<R> = Result<<R as Renderer>::MeshType, <R as Renderer>::ErrorType>;
+
 pub struct MeshPrimitives ();
 
 impl MeshPrimitives {
-    pub fn square<R: Renderer> (renderer: &R) -> <R as Renderer>::MeshType {
+    pub fn square<R: Renderer> (renderer: &R) -> ComputedMesh<R> {
         renderer.create_mesh(&SQUARE_VERTICES, &SQUARE_INDICES)
     }
 
-    pub fn cube <R: Renderer> (renderer: &R) -> <R as Renderer>::MeshType {
+    pub fn cube <R: Renderer> (renderer: &R) -> ComputedMesh<R> {
         renderer.create_mesh(&CUBE_VERTICES, &CUBE_INDICES)
     }
 
-    pub fn circle<R: Renderer, const S: usize> (renderer: &R) -> <R as Renderer>::MeshType {
+    pub fn circle<R: Renderer, const S: usize> (renderer: &R) -> ComputedMesh<R> {
         let delta = 2. * PI / (S as f32);
         let mut vertices : [[f32;3];S] = [[0., 0., 0.];S];
         let mut indices : [[u32;3];S] = [[0, 0, 0];S];
@@ -83,7 +85,7 @@ impl MeshPrimitives {
         renderer.create_mesh(&vertices, &indices)
     }
 
-    pub fn spherify <R: Renderer> (renderer: &R, vertices: &[[f32;3]], indices: &[[u32;3]]) -> <R as Renderer>::MeshType {
+    pub fn spherify <R: Renderer> (renderer: &R, vertices: &[[f32;3]], indices: &[[u32;3]]) -> ComputedMesh<R> {
         let map = vertices.iter().map(|x| NumArray(*x).unit().0);
         let norm : Vec<[f32;3]> = map.collect();
 

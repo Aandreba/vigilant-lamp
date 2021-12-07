@@ -1,17 +1,15 @@
 use crate::math::matrix::{Matrix2, Matrix3, Matrix4};
-
 use super::{shader::{FragmentShader, VertexShader}};
 
-pub type GenericProgram = dyn Program<Vertex = dyn VertexShader, Fragment = dyn FragmentShader, Uniform = dyn Uniform>;
-
 pub trait Program {
+    type Error;
     type Vertex: VertexShader;
     type Fragment: FragmentShader;
     type Uniform: Uniform;
 
     fn get_vertex (&self) -> &Self::Vertex;
     fn get_fragment (&self) -> &Self::Fragment;
-    fn validate (&self);
+    fn validate (&self) -> Result<(), Self::Error>;
 
     fn get_uniforms (&self) -> &[Self::Uniform];
     fn set_bool (&self, key: &Self::Uniform, value: bool); 
