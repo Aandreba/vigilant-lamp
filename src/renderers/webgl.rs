@@ -29,9 +29,14 @@ use crate::input::KeyboardKey;
 use crate::math::array_ext::NumArray;
 
 #[derive(Debug)]
-pub struct WebGL {
+struct SharedData {
     window: web_sys::Window,
-    context: Rc<WebGl2RenderingContext>,
+    context: WebGl2RenderingContext
+}
+
+#[derive(Debug)]
+pub struct WebGL {
+    data: Rc<SharedData>,
     wireframe: bool
 }
 
@@ -39,18 +44,16 @@ pub struct WebGL {
 pub struct WindowWGL {
     selector: String,
     canvas: HtmlCanvasElement,
-    context: Rc<WebGl2RenderingContext>
+    data: Rc<SharedData>
 }
 
 impl WindowWGL {
-    pub fn new (context: &Rc<WebGl2RenderingContext>, selector: &str, canvas: HtmlCanvasElement) -> WindowWGL {
-        let result = WindowWGL {
-            context: Rc::clone(context), 
+    fn new (data: Rc<SharedData>, selector: &str, canvas: HtmlCanvasElement) -> WindowWGL {
+        WindowWGL {
             selector: selector.to_string(), 
+            data,
             canvas
-        };
-
-        result
+        }
     }
 }
 
@@ -79,11 +82,12 @@ impl WebGL {
                 match context {
                     Err(x) => Err(x),
                     Ok(context) => {
-                        let renderer = WebGL { window, context: Rc::new(context), wireframe: false };
-                        let window = WindowWGL::new(&renderer.context, title, canvas);
+                        let data = SharedData { window, context };
+                        let renderer = WebGL { data: Rc::new(data), wireframe: false };
+                        let window = WindowWGL::new(renderer.data.clone(), title, canvas);
                         
-                        renderer.context.clear_color(0., 0., 0., 1.);
-                        renderer.context.viewport(0, 0, window.get_width() as i32, window.get_height() as i32);
+                        renderer.data.context.clear_color(0., 0., 0., 1.);
+                        renderer.data.context.viewport(0, 0, window.get_width() as i32, window.get_height() as i32);
                         
                         Ok((renderer, window))
                     }
@@ -93,19 +97,19 @@ impl WebGL {
     }
 
     fn create_shader (&self, typ: u32, code: &str) -> Result<WebGlShader, JsValue> {
-        let shader = self.context.create_shader(typ);
+        let shader = self.data.context.create_shader(typ);
         match shader {
             None => Err(JsValue::from_str("Error creating creating shader")),
             Some(shader) => {
-                self.context.shader_source(&shader, code);
-                self.context.compile_shader(&shader);
+                self.data.context.shader_source(&shader, code);
+                self.data.context.compile_shader(&shader);
 
-                let compile_status = self.context.get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS).as_bool().unwrap_or(false);
+                let compile_status = self.data.context.get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS).as_bool().unwrap_or(false);
                 if compile_status { 
                     return Ok(shader)
                 }
 
-                let info : Option<String> = self.context.get_shader_info_log(&shader);
+                let info : Option<String> = self.data.context.get_shader_info_log(&shader);
                 match info {
                     None => Err(JsValue::from_str("Unknown error creating shader")),
                     Some(x) => Err(JsValue::from_str(x.as_str()))
@@ -115,15 +119,15 @@ impl WebGL {
     }
 
     fn create_buffer_f32 (&self, values: &[f32]) -> Result<WebGlBuffer, JsValue> {
-        let buffer : Option<WebGlBuffer> = self.context.create_buffer();
+        let buffer : Option<WebGlBuffer> = self.data.context.create_buffer();
         match buffer {
             None => Err(JsValue::from_str("Error creating buffer")),
             Some(buffer) => {
-                self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
+                self.data.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
         
                 unsafe {
                     let array = js_sys::Float32Array::view(values);
-                    self.context.buffer_data_with_array_buffer_view(
+                    self.data.context.buffer_data_with_array_buffer_view(
                         WebGl2RenderingContext::ARRAY_BUFFER,
                         &array,
                         WebGl2RenderingContext::STATIC_DRAW)
@@ -135,15 +139,15 @@ impl WebGL {
     }
 
     fn create_buffer_u32 (&self, values: &[u32]) -> Result<WebGlBuffer, JsValue> {
-        let buffer : Option<WebGlBuffer> = self.context.create_buffer();
+        let buffer : Option<WebGlBuffer> = self.data.context.create_buffer();
         match buffer {
             None => Err(JsValue::from_str("Error creating buffer")),
             Some(buffer) => {
-                self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&buffer));
+                self.data.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&buffer));
         
                 unsafe {
                     let array = js_sys::Uint32Array::view(values);
-                    self.context.buffer_data_with_array_buffer_view(
+                    self.data.context.buffer_data_with_array_buffer_view(
                         WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
                         &array,
                         WebGl2RenderingContext::STATIC_DRAW)
@@ -152,6 +156,21 @@ impl WebGL {
                 Ok(buffer)
             }
         }
+    }
+
+    fn render (&self, scene: &mut Scene<WebGL>) {
+        scene.window.update();
+        scene.window.clear();
+
+        self.bind_program(&scene.program);
+        scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
+        
+        for elem in scene.objects.iter() {
+            scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
+            self.draw_mesh(&elem.mesh)
+        }
+
+        self.unbind_program(&scene.program);
     }
 }
 
@@ -168,27 +187,27 @@ impl Renderer for WebGL {
     }
 
     fn create_program (&self, vertex: VertexWGL, fragment: FragmentWGL, uniforms: &[&str]) -> Result<ProgramWGL, JsValue> {
-        let program : Option<WebGlProgram> = self.context.create_program();
+        let program : Option<WebGlProgram> = self.data.context.create_program();
         match program {
             None => Err(JsValue::from_str("Error creating program")),
             Some(program) => {
-                self.context.attach_shader(&program, &vertex.0);
-                self.context.attach_shader(&program, &fragment.0);
-                self.context.link_program(&program);
+                self.data.context.attach_shader(&program, &vertex.0);
+                self.data.context.attach_shader(&program, &fragment.0);
+                self.data.context.link_program(&program);
 
                 let uniform_map : Vec<UniformWGL> = uniforms.iter()
-                    .map(|x| UniformWGL { id: self.context.get_uniform_location(&program, x), name: String::from_str(*x).unwrap() }).collect();
+                    .map(|x| UniformWGL { id: self.data.context.get_uniform_location(&program, x), name: String::from_str(*x).unwrap() }).collect();
                 
-                let link_status = self.context
+                let link_status = self.data.context
                 .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
                 .as_bool()
                 .unwrap_or(false);
 
                 if link_status {
-                    return Ok(ProgramWGL { context: Rc::clone(&self.context), program, vertex, fragment, uniforms: uniform_map })
+                    return Ok(ProgramWGL { data: self.data.clone(), program, vertex, fragment, uniforms: uniform_map })
                 }
                 
-                let err : Option<String> = self.context
+                let err : Option<String> = self.data.context
                 .get_program_info_log(&program);
 
                 match err {
@@ -200,27 +219,27 @@ impl Renderer for WebGL {
     }
 
     fn bind_program (&self, program: &Self::ProgramType) {
-        self.context.use_program(Some(&program.program))
+        self.data.context.use_program(Some(&program.program))
     }
 
     fn unbind_program (&self, program: &ProgramWGL) {
-        self.context.use_program(None)
+        self.data.context.use_program(None)
     }
 
     fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<MeshWGL, JsValue> {
-        let vao : Option<WebGlVertexArrayObject> = self.context.create_vertex_array();
+        let vao : Option<WebGlVertexArrayObject> = self.data.context.create_vertex_array();
         match vao {
             None => Err(JsValue::from_str("Error creating mesh")),
             Some(vao) => {
-                self.context.bind_vertex_array(Some(&vao));
+                self.data.context.bind_vertex_array(Some(&vao));
                 let flat_vertices : Vec<f32> = vertices.iter().flat_map(|x| *x).collect();
                 let vertex = self.create_buffer_f32(flat_vertices.as_slice());
                 
                 match vertex {
                     Err(x) => Err(x),
                     Ok(vertex) => {
-                        self.context.vertex_attrib_pointer_with_i32(0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
-                        self.context.enable_vertex_attrib_array(0);
+                        self.data.context.vertex_attrib_pointer_with_i32(0, 3, WebGl2RenderingContext::FLOAT, false, 0, 0);
+                        self.data.context.enable_vertex_attrib_array(0);
 
                         let flat_indices : Vec<u32> = indices.iter().flat_map(|x| *x).collect();
                         self.create_buffer_u32(flat_indices.as_slice())
@@ -232,13 +251,13 @@ impl Renderer for WebGL {
     }
 
     fn draw_mesh (&self, mesh: &MeshWGL) {
-        self.context.bind_vertex_array(Some(&mesh.id));
-        self.context.enable_vertex_attrib_array(0);
+        self.data.context.bind_vertex_array(Some(&mesh.id));
+        self.data.context.enable_vertex_attrib_array(0);
 
-        self.context.draw_elements_with_i32(if self.wireframe { WebGl2RenderingContext::LINES } else { WebGl2RenderingContext::TRIANGLES }, 3 * mesh.get_index_count() as i32, WebGl2RenderingContext::UNSIGNED_INT, 0);
+        self.data.context.draw_elements_with_i32(if self.wireframe { WebGl2RenderingContext::LINES } else { WebGl2RenderingContext::TRIANGLES }, 3 * mesh.get_index_count() as i32, WebGl2RenderingContext::UNSIGNED_INT, 0);
         
-        self.context.disable_vertex_attrib_array(0);
-        self.context.bind_vertex_array(None);
+        self.data.context.disable_vertex_attrib_array(0);
+        self.data.context.bind_vertex_array(None);
     }
 
     fn create_vertex_shader (&self, code: &str) -> Result<VertexWGL, JsValue> {
@@ -273,25 +292,15 @@ impl Renderer for WebGL {
                         None => ()
                     }
                 }, |g| {
-                    g.game.0.render(&mut g.game.1)
+                    let scene = &mut g.game.1;
+                    let size = scene.window.get_size();
+
+                    g.game.0.data.context.viewport(0, 0, size.0 as i32, size.1 as i32);
+                    g.game.0.render(scene)
                 });
 
                 Ok(())
             }
-        }
-    }
-
-    fn get_property(&self, key: &str) -> Option<Box<dyn Any>> {
-        fn wrap<T: Any> (value: T) -> Option<Box<dyn Any>> {
-            Some(Box::new(value))
-        }
-
-        match key {
-            "scroll_x" => wrap(self.window.scroll_x()),
-            "scroll_y" => wrap(self.window.scroll_y()),
-            "pixel_ratio" => wrap(self.window.device_pixel_ratio()),
-            "orientation" => wrap(self.window.orientation()),
-            _ => None
         }
     }
 }
@@ -315,11 +324,35 @@ impl Window for WindowWGL {
     }
 
     fn clear (&self) {
-        self.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT)
+        self.data.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT)
     } 
 
     fn update (&mut self) {
-        self.context.viewport(0, 0, self.get_width() as i32, self.get_height() as i32)
+        self.data.context.viewport(0, 0, self.get_width() as i32, self.get_height() as i32)
+    }
+
+    fn get_property(&self, key: &str) -> Option<Box<dyn Any>> {
+        fn wrap<T: Any> (value: T) -> Option<Box<dyn Any>> {
+            Some(Box::new(value))
+        }
+
+        fn wrap_catch <T: Any> (value: Result<T, JsValue>) -> Option<Box<dyn Any>> {
+            match value {
+                Err(x) => {
+                    web_sys::console::error_1(&x);
+                    None
+                },
+                Ok(x) => Some(Box::new(x))
+            }
+        }
+
+        match key {
+            "scroll_x" => wrap_catch(self.data.window.scroll_x()),
+            "scroll_y" => wrap_catch(self.data.window.scroll_y()),
+            "pixel_ratio" => wrap(self.data.window.device_pixel_ratio()),
+            "orientation" => wrap(self.data.window.orientation()),
+            _ => None
+        }
     }
 }
 
@@ -339,7 +372,7 @@ impl Uniform for UniformWGL {
 // PROGRAM
 #[derive(Debug)]
 pub struct ProgramWGL {
-    context: Rc<WebGl2RenderingContext>,
+    data: Rc<SharedData>,
     program: WebGlProgram,
     vertex: VertexWGL,
     fragment: FragmentWGL,
@@ -361,15 +394,15 @@ impl Program for ProgramWGL {
     }
 
     fn validate (&self) -> Result<(), JsValue> {
-        self.context.validate_program(&self.program);
+        self.data.context.validate_program(&self.program);
 
-        let success = self.context
+        let success = self.data.context
         .get_program_parameter(&self.program, WebGl2RenderingContext::VALIDATE_STATUS)
         .as_bool()
         .unwrap_or(false);
         
         if !success {
-            let err : Option<String> = self.context.get_program_info_log(&self.program);
+            let err : Option<String> = self.data.context.get_program_info_log(&self.program);
             match err {
                 None => return Err(JsValue::from_str("Unknown error creating program object")),
                 Some(x) => return Err(JsValue::from_str(x.as_str()))
@@ -388,15 +421,15 @@ impl Program for ProgramWGL {
     }
 
     fn set_int (&self, key: &UniformWGL, value: i32) {
-        self.context.uniform1i(key.id.as_ref(), value)
+        self.data.context.uniform1i(key.id.as_ref(), value)
     }
 
     fn set_uint (&self, key: &UniformWGL, value: u32) {
-        self.context.uniform1ui(key.id.as_ref(), value)
+        self.data.context.uniform1ui(key.id.as_ref(), value)
     }
 
     fn set_float (&self, key: &UniformWGL, value: f32) {
-        self.context.uniform1f(key.id.as_ref(), value)
+        self.data.context.uniform1f(key.id.as_ref(), value)
     }
 
     fn set_double (&self, key: &UniformWGL, value: f64) {
@@ -409,15 +442,15 @@ impl Program for ProgramWGL {
     }
 
     fn set_ints (&self, key: &UniformWGL, value: &[i32]) {
-        self.context.uniform1iv_with_i32_array(key.id.as_ref(), value)
+        self.data.context.uniform1iv_with_i32_array(key.id.as_ref(), value)
     }
 
     fn set_uints (&self, key: &UniformWGL, value: &[u32]) {
-        self.context.uniform1uiv_with_u32_array(key.id.as_ref(), value)
+        self.data.context.uniform1uiv_with_u32_array(key.id.as_ref(), value)
     }
 
     fn set_floats (&self, key: &UniformWGL, value: &[f32]) {
-        self.context.uniform1fv_with_f32_array(key.id.as_ref(), value)
+        self.data.context.uniform1fv_with_f32_array(key.id.as_ref(), value)
     }
 
     fn set_doubles (&self, key: &UniformWGL, value: &[f64]) {
@@ -425,15 +458,15 @@ impl Program for ProgramWGL {
     }
 
     fn set_float_mat2 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix2<f32>) {
-        self.context.uniform_matrix2fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
+        self.data.context.uniform_matrix2fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
     fn set_float_mat3 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix3<f32>) {
-        self.context.uniform_matrix3fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
+        self.data.context.uniform_matrix3fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
     fn set_float_mat4 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix4<f32>) {
-        self.context.uniform_matrix4fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
+        self.data.context.uniform_matrix4fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
     fn set_double_mat2 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix2<f64>) {
@@ -501,10 +534,18 @@ impl KeyboardListener for KeyboardListenerWGL {
     fn is_pressed (&self, key: KeyboardKey) -> bool {
         self.0[key as usize]
     }
+
+    fn init () -> Self {
+        todo!()
+    }
 }
 
 impl MouseListener for MouseListenerWGL {
     fn relative_position (&self) -> NumArray<f32, 2> {
         self.0
+    }
+
+    fn init () -> Self {
+        Self::new()
     }
 }

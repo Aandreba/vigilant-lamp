@@ -7,10 +7,12 @@
     <title>Document</title>
     <style>
         html, body {
+            border: 0;
             height: 200vh;
         }
 
         canvas {
+            position: fixed;
             width: 100vw;
             height: 100vw;
         }
@@ -23,6 +25,10 @@
 
 <script type="module">
     import init from "./pkg/tests.js"
+    const CANVAS = document.querySelector("canvas");
+
+    setSize();
+    window.onresize = setSize;
 
     async function start () {
         try {
@@ -32,6 +38,11 @@
         } finally {
             console.log("WASM loaded")
         }
+    }
+
+    function setSize () {
+        CANVAS.setAttribute("width", window.innerWidth)
+        CANVAS.setAttribute("height", window.innerHeight)
     }
 
     start()

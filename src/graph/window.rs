@@ -1,5 +1,7 @@
 use std::any::Any;
 
+use crate::Flattern;
+
 pub trait Window {
     fn get_title (&self) -> &str;
     fn get_width (&self) -> u32;
@@ -16,4 +18,19 @@ pub trait Window {
 
     /// Method that allows to retrieve preperties that are renderer specific, such as scroll position
     fn get_property (&self, key: &str) -> Option<Box<dyn Any>>;
+    fn get_property_as<T: 'static> (&self, key: &str) -> Option<Box<T>> {
+        let any = self.get_property(key).map(|x| x.downcast::<T>()).flattern(|| "Error");
+        match any {
+            Err(x) => None,
+            Ok(x) => Some(x)
+        }
+    }
+
+    fn get_property_copy<T: 'static + Copy> (&self, key: &str) -> Option<T> {
+        let any = self.get_property(key).map(|x| x.downcast::<T>()).flattern(|| "Error");
+        match any {
+            Err(x) => None,
+            Ok(x) => Some(*x.as_ref())
+        }
+    }
 }

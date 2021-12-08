@@ -18,7 +18,7 @@ macro_rules! print {
 
 #[macro_export]
 macro_rules! println {
-    () => ();
+    () => ({web_sys::console::log_0()});
     ($($arg:tt)*) => ({
         use crate::extra::wasm_mappings::_print_args;
         _print_args(format_args!($($arg)*));
