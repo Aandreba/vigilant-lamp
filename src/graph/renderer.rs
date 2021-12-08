@@ -1,11 +1,12 @@
 use std::{fs::File, io::Read, any::Any};
-use crate::engine::{input::{KeyboardListener, MouseListener}, Scene};
+use crate::{engine::{input::{KeyboardListener, MouseListener}}, Scene};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
+// RENDERER
 pub trait Renderer: Sized {
    type ErrorType;
    type WindowType: Window;
-   type ProgramType: Program;
+   type ProgramType: Program<Error = Self::ErrorType>;
    type MeshType: Mesh;
 
    type KeyboardListenerType: KeyboardListener;
@@ -47,22 +48,4 @@ pub trait Renderer: Sized {
 
    fn set_wireframe (&mut self, value: bool);
    fn run (self, scene: Scene<Self>) -> Result<(), Self::ErrorType>;
-
-   fn render (&self, scene: &mut Scene<Self>) {
-      scene.window.update();
-      scene.window.clear();
-
-      self.bind_program(&scene.program);
-      scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
-      
-      for elem in scene.objects.iter() {
-         scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
-         self.draw_mesh(&elem.mesh)
-      }
-
-      self.unbind_program(&scene.program);
-   }
-
-   /// Method that allows to retrieve preperties that are renderer specific, such as scroll position
-   fn get_property (&self, key: &str) -> Option<Box<dyn Any>>;
 }

@@ -1,10 +1,19 @@
-use vigilant_lamp::{Script, Scene};
-use vigilant_lamp::webgl::{WindowWGL, MeshWGL};
-use wasm_bindgen::prelude::*;
-use vigilant_lamp::extra::wasm_mappings::*;
-use vigilant_lamp::renderers::webgl::WebGL;
-use vigilant_lamp::{builder::build_webgl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
+use vigilant_lamp::{wasm, desktop};
 
+wasm! {
+    use vigilant_lamp::{Script, Scene};,
+    use vigilant_lamp::webgl::{WindowWGL, MeshWGL};,
+    use wasm_bindgen::prelude::*;,
+    use vigilant_lamp::extra::wasm_mappings::*;,
+    use vigilant_lamp::renderers::webgl::WebGL;,
+    use vigilant_lamp::{builder::build_webgl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
+}
+
+desktop! {
+    include!("main.rs");
+}
+
+#[cfg(target_family = "wasm")]
 #[wasm_bindgen(start)]
 pub fn main() -> Result<(), JsValue> {
     println!();
@@ -41,12 +50,4 @@ pub fn main() -> Result<(), JsValue> {
             }
         }
     }
-}
-
-fn get_script<R: Renderer> () -> Script<R> {
-    Script::of_update(|s, k, m, d| {
-        let sec = d.as_secs_f32();
-        let obj = &mut s.objects[0];
-        obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
-    })
 }

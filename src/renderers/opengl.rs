@@ -2,7 +2,7 @@ use core::panic;
 use std::{str::FromStr};
 use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl}, GL_COMPILE_STATUS};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{Clock, input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}, FlatMap};
+use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}, FlatMap};
 
 // RENDERER
 pub struct OpenGL {
@@ -24,79 +24,72 @@ impl Renderer for OpenGL {
     type KeyboardListenerType = KeyboardListenerGL; 
     type MouseListenerType = MouseListenerGL;
 
-    fn run (self, mut scene: Scene<Self>) -> Result<(), String> {
-        let validate = scene.program.validate();
-        if validate.is_err() {
-            return validate
-        }
+    fn run (self, mut scene: Scene<OpenGL>) -> Result<(), Self::ErrorType> {
+        let scene_init = scene.init();
 
-        let mut clock = Clock::new();
-        let mut keyboard_listener = KeyboardListenerGL { pressed: [false; 161] };
-        let mut mouse_listener = MouseListenerGL { position: NumArray::zero() };
-
-        match scene.script.start {
-            Some(x) => x(&mut scene),
-            None => ()
-        }
-
-        self.bind_program(&scene.program);
-        self.event_loop.run(move |event, _, control_flow| {
-            *control_flow = ControlFlow::Wait;
-            
-            match event {
-                // CLOSE EVENT
-                Event::WindowEvent {
-                    event: WindowEvent::CloseRequested,
-                    window_id,
-                } if window_id == scene.window.context.window().id() => *control_flow = ControlFlow::Exit,
-
-                // KEYBOARD EVENT
-                Event::WindowEvent { event: WindowEvent::KeyboardInput { device_id: _, input, is_synthetic: _ }, window_id } => {
-                    let keycode = input.virtual_keycode;
-                    let key = match keycode {
-                        Some(x) => KEYBOARD_MAPPING[x as usize],
-                        None => KeyboardKey::UNKNOWN
-                    };
-
-                    keyboard_listener.pressed[key as usize] = input.state == ElementState::Pressed
-                },
-
-                // MOUSE EVENT
-                Event::WindowEvent { event: WindowEvent::CursorMoved { device_id: _, position, modifiers: _ }, window_id } => {
-                    let size = scene.window.get_size();
-                    let x = 2. * position.x / (size.0 as f64) - 1.;
-                    let y = 2. * position.y / (size.1 as f64) - 1.;
+        match scene_init {
+            Err(x) => Err(x),
+            Ok((mut clock, mut keyboard, mut mouse)) => {
+                self.bind_program(&scene.program);
+                self.event_loop.run(move |event, _, control_flow| {
+                    *control_flow = ControlFlow::Poll;
                     
-                    // TODO FIX
-                    mouse_listener.position = NumArray([x as f32, y as f32])
-                }
+                    match event {
+                        // CLOSE EVENT
+                        Event::WindowEvent {
+                            event: WindowEvent::CloseRequested,
+                            window_id,
+                        } if window_id == scene.window.context.window().id() => *control_flow = ControlFlow::Exit,
+        
+                        // KEYBOARD EVENT
+                        Event::WindowEvent { event: WindowEvent::KeyboardInput { device_id: _, input, is_synthetic: _ }, window_id } => {
+                            let keycode = input.virtual_keycode;
+                            let key = match keycode {
+                                Some(x) => KEYBOARD_MAPPING[x as usize],
+                                None => KeyboardKey::UNKNOWN
+                            };
+        
+                            keyboard.pressed[key as usize] = input.state == ElementState::Pressed
+                        },
+        
+                        // MOUSE EVENT
+                        Event::WindowEvent { event: WindowEvent::CursorMoved { device_id: _, position, modifiers: _ }, window_id } => {
+                            let size = scene.window.get_size();
+                            let x = 2. * position.x / (size.0 as f64) - 1.;
+                            let y = 2. * position.y / (size.1 as f64) - 1.;
+                            
+                            // TODO FIX
+                            mouse.position = NumArray([x as f32, y as f32])
+                        }
+        
+                        // REDRAW EVENT (UPDATE)
+                        Event::RedrawRequested(_) => {
+                            scene.window.clear();
+                            
+                            let delta = clock.delta();
+                            match scene.script.update {
+                                Some(x) => x(&mut scene, &keyboard, &mouse, &delta),
+                                None => ()
+                            }
+        
+                            scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
+                            for elem in scene.objects.iter() {
+                                scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
+                                unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
+                            }
 
-                // REDRAW EVENT (UPDATE)
-                Event::RedrawRequested(_) => {
-                    scene.window.clear();
-                    
-                    let delta = clock.delta();
-                    match scene.script.update {
-                        Some(x) => x(&mut scene, &keyboard_listener, &mouse_listener, &delta),
-                        None => ()
+                            scene.window.update();
+                        },
+        
+                        // EXIT EVENT
+                        Event::MainEventsCleared => {
+                            scene.window.context.window().request_redraw();
+                        }
+                        _ => ()
                     }
-
-                    scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
-                    for elem in scene.objects.iter() {
-                        scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
-                        unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
-                    }
-
-                    scene.window.update()
-                },
-
-                // EXIT EVENT
-                Event::MainEventsCleared => {
-                    scene.window.context.window().request_redraw();
-                }
-                _ => ()
+                });
             }
-        })
+        }
     }
 
     fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Result<Self::WindowType, String> {
@@ -224,10 +217,6 @@ impl Renderer for OpenGL {
 
     fn unbind_program (&self, program: &ProgramGL) {
         glUseProgram(0)
-    }
-
-    fn get_property(&self, key: &str) -> Option<Box<dyn std::any::Any>> {
-        None
     }
 }
 
@@ -480,6 +469,10 @@ impl Window for WinitWindow {
             glClear(gl33::GL_COLOR_BUFFER_BIT)
         }
     }
+
+    fn get_property(&self, key: &str) -> Option<Box<dyn std::any::Any>> {
+        None
+    }
 }
 
 
@@ -674,6 +667,10 @@ impl KeyboardListener for KeyboardListenerGL {
     fn is_pressed (&self, key: KeyboardKey) -> bool {
         self.pressed[key as usize]
     }
+
+    fn init () -> Self {
+        KeyboardListenerGL { pressed: [false; 161] }
+    }
 }
 
 pub struct MouseListenerGL {
@@ -681,6 +678,10 @@ pub struct MouseListenerGL {
 }
 
 impl MouseListener for MouseListenerGL {
+    fn init () -> Self {
+        MouseListenerGL { position: NumArray::zero() }
+    }
+
     fn relative_position (&self) -> NumArray<f32, 2> {
         self.position.clone()
     }

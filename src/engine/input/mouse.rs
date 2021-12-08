@@ -2,6 +2,8 @@ use crate::math::array_ext::NumArray;
 
 /// Trait to streamline reading mouse inputs across various implementation types
 pub trait MouseListener {
+    fn init () -> Self;
+    
     /// Relative position of the mouse in a (-1, 1) range
     fn relative_position (&self) -> NumArray<f32, 2>;
 

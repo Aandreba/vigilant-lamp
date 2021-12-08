@@ -1,3 +1,5 @@
+use std::any::Any;
+
 pub trait Window {
     fn get_title (&self) -> &str;
     fn get_width (&self) -> u32;
@@ -11,4 +13,7 @@ pub trait Window {
 
     fn clear (&self);
     fn update (&mut self);
+
+    /// Method that allows to retrieve preperties that are renderer specific, such as scroll position
+    fn get_property (&self, key: &str) -> Option<Box<dyn Any>>;
 }

@@ -142,5 +142,6 @@ pub enum KeyboardKey {
 
 /// Trait to streamline reading keyboard inputs across various implementation types
 pub trait KeyboardListener {
+    fn init () -> Self;
     fn is_pressed (&self, key: KeyboardKey) -> bool;
 }
