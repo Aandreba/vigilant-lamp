@@ -28,12 +28,14 @@ use crate::graph::{Renderer, shaders::{Program, Uniform, VertexShader, FragmentS
 use crate::input::KeyboardKey;
 use crate::math::array_ext::NumArray;
 
+#[derive(Debug)]
 pub struct WebGL {
     window: web_sys::Window,
     context: Rc<WebGl2RenderingContext>,
     wireframe: bool
 }
 
+#[derive(Debug)]
 pub struct WindowWGL {
     selector: String,
     canvas: HtmlCanvasElement,
@@ -137,12 +139,12 @@ impl WebGL {
         match buffer {
             None => Err(JsValue::from_str("Error creating buffer")),
             Some(buffer) => {
-                self.context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
+                self.context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&buffer));
         
                 unsafe {
                     let array = js_sys::Uint32Array::view(values);
                     self.context.buffer_data_with_array_buffer_view(
-                        WebGl2RenderingContext::ARRAY_BUFFER,
+                        WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
                         &array,
                         WebGl2RenderingContext::STATIC_DRAW)
                 }
@@ -322,6 +324,7 @@ impl Window for WindowWGL {
 }
 
 // UNFIFORM
+#[derive(Debug)]
 pub struct UniformWGL {
     id: Option<WebGlUniformLocation>,
     name: String
@@ -334,6 +337,7 @@ impl Uniform for UniformWGL {
 }
 
 // PROGRAM
+#[derive(Debug)]
 pub struct ProgramWGL {
     context: Rc<WebGl2RenderingContext>,
     program: WebGlProgram,
@@ -446,14 +450,17 @@ impl Program for ProgramWGL {
 }
 
 // SHADER
+#[derive(Debug)]
 pub struct VertexWGL (WebGlShader);
 
+#[derive(Debug)]
 pub struct FragmentWGL (WebGlShader);
 
 impl VertexShader for VertexWGL {}
 impl FragmentShader for FragmentWGL {}
 
 // MESH
+#[derive(Debug)]
 pub struct MeshWGL {
     id: WebGlVertexArrayObject,
     vertices: WebGlBuffer,

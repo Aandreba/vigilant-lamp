@@ -1,5 +1,8 @@
 {
     "scripts": {
         "wasm": "cd tests && npm run test && cd ../"
+    },
+    "dependencies": {
+        "express": "^4.17.1"
     }
 }
