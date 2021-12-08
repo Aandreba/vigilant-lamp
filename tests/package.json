@@ -1,0 +1,14 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "wasm-pack build --target web --out-dir ./web/pkg && node web/index.js"
+  },
+  "author": "Alex Andreba",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

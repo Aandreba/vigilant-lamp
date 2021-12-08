@@ -1,0 +1,5 @@
+{
+    "scripts": {
+        "wasm": "cd tests && npm run test && cd ../"
+    }
+}

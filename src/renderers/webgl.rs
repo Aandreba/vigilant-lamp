@@ -44,7 +44,7 @@ impl WindowWGL {
     pub fn new (context: &Rc<WebGl2RenderingContext>, selector: &str, canvas: HtmlCanvasElement) -> WindowWGL {
         let result = WindowWGL {
             context: Rc::clone(context), 
-            selector: String::from_str(selector).unwrap(), 
+            selector: selector.to_string(), 
             canvas
         };
 
@@ -54,9 +54,9 @@ impl WindowWGL {
 
 impl WebGL {
     pub fn new (title: &str) -> Result<(WebGL, WindowWGL), JsValue> {
-        let window : web_sys::Window = web_sys::window().unwrap();
-        let document : web_sys::Document = window.document().unwrap();
-        let config = JsValue::from_serde("{ antialias: false }").unwrap();
+        let window : web_sys::Window = web_sys::window().expect("Window not found");
+        let document : web_sys::Document = window.document().expect("Document not found");
+        let config = JsValue::from_serde("{ antialias: false }").expect("Error parsing configuration");
 
         let element : Result<Element, JsValue> = document.query_selector(title)
             .flattern_single(|| JsValue::from_str("Element not found"));
@@ -233,7 +233,7 @@ impl Renderer for WebGL {
         self.context.bind_vertex_array(Some(&mesh.id));
         self.context.enable_vertex_attrib_array(0);
 
-        self.context.draw_elements_with_f64(if self.wireframe { WebGl2RenderingContext::LINES } else { WebGl2RenderingContext::TRIANGLES }, 3 * mesh.get_index_count() as i32, WebGl2RenderingContext::UNSIGNED_INT, 0.);
+        self.context.draw_elements_with_i32(if self.wireframe { WebGl2RenderingContext::LINES } else { WebGl2RenderingContext::TRIANGLES }, 3 * mesh.get_index_count() as i32, WebGl2RenderingContext::UNSIGNED_INT, 0);
         
         self.context.disable_vertex_attrib_array(0);
         self.context.bind_vertex_array(None);
@@ -322,7 +322,6 @@ impl Window for WindowWGL {
 }
 
 // UNFIFORM
-#[wasm_bindgen]
 pub struct UniformWGL {
     id: Option<WebGlUniformLocation>,
     name: String
@@ -335,7 +334,6 @@ impl Uniform for UniformWGL {
 }
 
 // PROGRAM
-#[wasm_bindgen]
 pub struct ProgramWGL {
     context: Rc<WebGl2RenderingContext>,
     program: WebGlProgram,
