@@ -6,7 +6,7 @@ pub mod color;
 pub mod dyn_import;
 
 mod error_map;
-pub use error_map::{FlatMap, Flattern, ErrorType};
+pub use error_map::{ResultFlatMap, OptionFlatMap, Flattern, ErrorType};
 
 #[cfg(target_family = "wasm")]
 pub mod wasm_mappings;

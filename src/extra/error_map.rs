@@ -2,6 +2,7 @@ use std::fmt::Display;
 use ErrorType::*;
 
 // ERROR TYPE
+#[derive(Debug)]
 pub enum ErrorType<T,U> {
     First(T),
     Last(U)
@@ -52,6 +53,24 @@ impl<T, U> ErrorType<T, U> {
     }
 }
 
+impl<T,U> ErrorType<ErrorType<T,U>,U> {
+    pub fn flatten (self) -> ErrorType<T,U> {
+        match self {
+            First(x) => x,
+            Last(x) => Last(x)
+        }
+    }
+}
+
+impl<T,U> ErrorType<T,ErrorType<T,U>> {
+    pub fn flatten (self) -> ErrorType<T,U> {
+        match self {
+            First(x) => First(x),
+            Last(x) => x
+        }
+    }
+}
+
 impl<T,U> Display for ErrorType<T,U> where T: Display, U: Display {
     fn fmt (&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -62,12 +81,25 @@ impl<T,U> Display for ErrorType<T,U> where T: Display, U: Display {
 }
 
 // FLAT MAP
-pub trait FlatMap<R1,E1> {
+pub trait ResultFlatMap<R1,E1> {
     fn flat_map <R2, E2, O: FnOnce(R1) -> Result<R2,E2>> (self, map: O) -> Result<R2,ErrorType<E1,E2>>;
     fn flat_map_single <R2, O: FnOnce(R1) -> Result<R2,E1>> (self, map: O) -> Result<R2,E1>;
 }
 
-impl<R1,E1> FlatMap<R1, E1> for Result<R1,E1> {
+pub trait OptionFlatMap<T> {
+    fn flat_map <T2, F: FnOnce(T) -> Option<T2>> (self, map: F) -> Option<T2>;
+}
+
+impl<T> OptionFlatMap<T> for Option<T> {
+    fn flat_map <T2, F: FnOnce(T) -> Option<T2>> (self, map: F) -> Option<T2> {
+        match self {
+            None => None,
+            Some(x) => map(x)
+        }
+    }
+}   
+
+impl<R1,E1> ResultFlatMap<R1, E1> for Result<R1,E1> {
     fn flat_map <R2, E2, O: FnOnce(R1) -> Result<R2,E2>> (self, map: O) -> Result<R2,ErrorType<E1,E2>> {
         match self {
             Err(x) => Err(First(x)),

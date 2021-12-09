@@ -197,6 +197,13 @@ pub trait Program {
     }
 }
 
-pub trait Uniform {
+pub trait Uniform: Sized {
     fn get_name (&self) -> &str;
+    fn get_child<'a, P: Program<Uniform = Self>> (&self, name: &str, program: &'a P) -> Option<&'a Self> {
+        let mut full_name = self.get_name().to_string();
+        full_name.push_str(".");
+        full_name.push_str(name);
+
+        program.get_uniform(full_name.as_str())
+    }
 }

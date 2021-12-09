@@ -1,9 +1,9 @@
 use vigilant_lamp::{wasm, desktop};
 
 wasm! {
-    include!("main.rs");
+    include!("wasm.rs");
 }
 
 desktop! {
-    include!("desktop.rs");
+    include!("main.rs");
 }

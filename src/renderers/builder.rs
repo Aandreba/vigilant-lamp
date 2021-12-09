@@ -1,8 +1,9 @@
-use crate::{Renderer, Camera, Scene, Script};
+use crate::{Renderer, Camera, Scene, Script, wasm};
 
-#[cfg(target_family = "wasm")]
-use crate::renderers::webgl::WebGL;
-use wasm_bindgen::JsValue;
+wasm! {
+    use crate::renderers::webgl::WebGL;,
+    use wasm_bindgen::JsValue;
+}
 
 #[cfg(not(target_family = "wasm"))]
 use crate::{opengl::OpenGL};
@@ -59,7 +60,7 @@ fn build_gl<R: Renderer> (vertex_inc: &str, fragment_inc: &str, renderer: &R) ->
             let fragment = renderer.create_fragment_shader(fragment_inc);
             match fragment {
                 Err(z) => Err(z),
-                Ok(z) => renderer.create_program(x, z, &["world_matrix", "camera"])
+                Ok(z) => renderer.create_program(x, z, &["world_matrix", "camera", "material"])
             }
         }
     }

@@ -4,6 +4,7 @@ mod scene;
 mod transform;
 mod clock;
 mod script;
+mod material;
 pub mod input;
 
 pub use camera::{Camera, PerspectiveCamera};
@@ -12,3 +13,4 @@ pub use scene::{Scene};
 pub use transform::Transform;
 pub use clock::Clock;
 pub use script::Script;
+pub use material::{Material, Texture};

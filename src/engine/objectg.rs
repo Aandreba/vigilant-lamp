@@ -1,14 +1,19 @@
+use crate::{Material, Renderer};
 use crate::engine::transform::Transform;
-use crate::graph::{Mesh};
 
 /// Element containing all needed information a game object
-pub struct ObjectG<T: Mesh> {    
-    pub mesh: T,
-    pub transform: Transform
+pub struct ObjectG<R: Renderer> {    
+    pub mesh: R::MeshType,
+    pub transform: Transform,
+    pub material: Material<R>
 }
 
-impl<T: Mesh> ObjectG<T> {
-    pub fn new (mesh: T) -> ObjectG<T> {
-        ObjectG { mesh, transform: Transform::default() }
+impl<R: Renderer> ObjectG<R> {
+    pub fn new (mesh: R::MeshType, transform: Transform, material: Material<R>) -> ObjectG<R> {
+        ObjectG { mesh, transform, material }
+    }
+
+    pub fn of_mesh (mesh: R::MeshType, material: Material<R>) -> ObjectG<R> {
+        ObjectG { mesh, transform: Transform::default(), material }
     }
 }

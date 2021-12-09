@@ -1,4 +1,8 @@
+use crate::shaders::UniformValue;
+
 /// Representation of a color
+
+#[derive(Debug)]
 pub struct Color (u32);
 
 // CONSTANTS
@@ -191,5 +195,12 @@ impl Color {
 
         let saturation = if max == 0. { 0. } else { delta / max };
         [hue, saturation, max]
+    }
+}
+
+impl UniformValue for Color {
+    fn set_to_program<P: crate::shaders::Program> (self, program: &P, key: &P::Uniform) -> bool {
+        program.set_uint(key, self.0);
+        true
     }
 }
