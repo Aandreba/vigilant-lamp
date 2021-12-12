@@ -1,5 +1,5 @@
 pub mod safe_zip;
-pub mod array_concat;
+pub mod traits;
 pub mod array_builder;
 pub mod num_two;
 pub mod color;

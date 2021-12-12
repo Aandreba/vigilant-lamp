@@ -20,8 +20,9 @@ bytemuck = "1.7.2"
 instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }
 wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] } 
 js-sys = "0.3.55"
-yew = "0.18.0"
+yew = "0.19.3"
 game-loop = "0.8.0"
+derive_more = "0.99.17"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 gl33 = "0.2.1"

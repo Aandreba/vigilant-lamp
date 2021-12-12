@@ -1,6 +1,4 @@
 use std::{f32::consts::PI};
-use crate::math::array_ext::NumArray;
-
 use super::renderer::Renderer;
 
 pub const SQUARE_VERTICES : [[f32;3];4] = [
@@ -83,13 +81,5 @@ impl MeshPrimitives {
         }
 
         renderer.create_mesh(&vertices, &indices)
-    }
-
-    pub fn spherify <R: Renderer> (renderer: &R, vertices: &[[f32;3]], indices: &[[u32;3]]) -> ComputedMesh<R> {
-        let map = vertices.iter().map(|x| NumArray(*x).unit().0);
-        let norm : Vec<[f32;3]> = map.collect();
-
-        println!("{:?}; {:?}", vertices, norm);
-        renderer.create_mesh(norm.as_ref(), indices)
     }
 }

@@ -1,10 +1,10 @@
-use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}};
+use crate::{math::{array_ext::NumArray, matrix::{Matrix4}, quaternion::Quaternion32}, vector::EucVec3};
 
 /// Element used to represent the view characteristics of a scene
 pub trait Camera {
     fn projection_matrix (&self, width: u32, height: u32) -> Matrix4<f32>;
 
-    fn get_position (&self) -> &NumArray<f32, 3>;
+    fn get_position (&self) -> &EucVec3<f32>;
     fn get_rotation (&self) -> &Quaternion32;
 
     fn get_position_mut (&mut self) -> &mut NumArray<f32, 3>;
@@ -24,7 +24,7 @@ pub trait Camera {
 
     fn view_matrix (&self) -> Matrix4<f32> {
         let position = Matrix4::new([
-            NumArray([1., 0., 0., -self.get_position().x()]),
+            NumArray([1., 0., 0., -self.get_position()['x']]),
             NumArray([0., 1., 0., -self.get_position().y()]),
             NumArray([0., 0., 1., -self.get_position().z()]),
             NumArray([0., 0., 0., 1.])
