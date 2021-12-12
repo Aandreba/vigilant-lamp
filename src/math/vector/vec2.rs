@@ -2,13 +2,13 @@ use std::ops::{Add, Sub, Mul, Div};
 use derive_more::{AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use num::{Float, Num};
 
-#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug)]
-pub struct EucVec2<T: Num> {
+#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone)]
+pub struct EucVec2<T: Num + Copy> {
     pub x: T,
     pub y: T
 }
 
-impl<T: Num> EucVec2<T> {
+impl<T: Num + Copy> EucVec2<T> {
     pub fn new (x: T, y: T) -> EucVec2<T> {
         EucVec2{x, y}
     }
@@ -32,7 +32,7 @@ impl<T: Num> EucVec2<T> {
 }
 
 // VECTOR - VECTOR
-impl<T: Num> Add<EucVec2<T>> for EucVec2<T> {
+impl<T: Num + Copy> Add<EucVec2<T>> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn add(self, rhs: EucVec2<T>) -> Self::Output {
@@ -43,7 +43,7 @@ impl<T: Num> Add<EucVec2<T>> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Sub<EucVec2<T>> for EucVec2<T> {
+impl<T: Num + Copy> Sub<EucVec2<T>> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn sub(self, rhs: EucVec2<T>) -> Self::Output {
@@ -54,7 +54,7 @@ impl<T: Num> Sub<EucVec2<T>> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Mul<EucVec2<T>> for EucVec2<T> {
+impl<T: Num + Copy> Mul<EucVec2<T>> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn mul(self, rhs: EucVec2<T>) -> Self::Output {
@@ -65,7 +65,7 @@ impl<T: Num> Mul<EucVec2<T>> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Div<EucVec2<T>> for EucVec2<T> {
+impl<T: Num + Copy> Div<EucVec2<T>> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn div(self, rhs: EucVec2<T>) -> Self::Output {
@@ -77,7 +77,7 @@ impl<T: Num> Div<EucVec2<T>> for EucVec2<T> {
 }
 
 // VECTOR - SCALAR
-impl<T: Num> Add<T> for EucVec2<T> {
+impl<T: Num + Copy> Add<T> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn add(self, rhs: T) -> Self::Output {
@@ -88,7 +88,7 @@ impl<T: Num> Add<T> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Sub<T> for EucVec2<T> {
+impl<T: Num + Copy> Sub<T> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn sub(self, rhs: T) -> Self::Output {
@@ -99,7 +99,7 @@ impl<T: Num> Sub<T> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Mul<T> for EucVec2<T> {
+impl<T: Num + Copy> Mul<T> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -110,7 +110,7 @@ impl<T: Num> Mul<T> for EucVec2<T> {
     }
 }
 
-impl<T: Num> Div<T> for EucVec2<T> {
+impl<T: Num + Copy> Div<T> for EucVec2<T> {
     type Output = EucVec2<T>;
 
     fn div(self, rhs: T) -> Self::Output {

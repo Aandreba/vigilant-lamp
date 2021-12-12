@@ -1,9 +1,7 @@
 use num::Float;
 use std::{fmt::{Display, Formatter, Result}, ops::{Add, Sub, Mul, Div}};
 
-use crate::{extra::num_two::NumericTwo, math::array_ext::{NumArray, NumericArrayTraits}};
-use super::matrix::{Matrix3, Matrix4};
-
+use crate::{extra::num_two::NumericTwo, vector::EucVec3};
 pub type Quaternion32 = Quaternion<f32>;
 pub type Quaternion64 = Quaternion<f64>;
 
@@ -24,8 +22,8 @@ impl<T: Float> Quaternion<T> {
         Quaternion { w, i: v[0], j: v[1], k: v[2] }
     }
 
-    pub fn from_narray (w: T, v: NumArray<T,3>) -> Quaternion<T> {
-        Quaternion { w, i: v[0], j: v[1], k: v[2] }
+    pub fn from_narray (w: T, v: EucVec3<T>) -> Quaternion<T> {
+        Quaternion { w, i: v.x, j: v.y, k: v.z }
     }
 
     pub fn from_angles (roll: T, pitch: T, yaw: T) -> Quaternion<T> where T: NumericTwo {
@@ -68,8 +66,8 @@ impl<T: Float> Quaternion<T> {
         self / self.norm()
     }
 
-    pub fn vector (&self) -> NumArray<T,3> {
-        NumArray([self.i, self.j, self.k])
+    pub fn vector (&self) -> EucVec3<T> {
+        EucVec3::new(self.i, self.j, self.k)
     }
 
     pub fn sqrt (&self) -> Quaternion<T> where T: NumericTwo {
@@ -96,7 +94,7 @@ impl<T: Float> Quaternion<T> {
         Quaternion::from_narray(norm.ln(), self.vector().unit() * (self.w / norm).acos())
     }
 
-    pub fn rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
+    /*pub fn rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
         let one = T::one();
         let r2 = self.w * self.w;
         let i2 = self.i * self.i;
@@ -193,7 +191,7 @@ impl<T: Float> Quaternion<T> {
             NumArray([ik - jr, jk + ir, one - j2 - i2, zero]),
             NumArray([zero, zero, zero, one])
         ])
-    }
+    }*/
 }
 
 // ADDITION

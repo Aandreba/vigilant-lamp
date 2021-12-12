@@ -1,25 +1,31 @@
+macro_rules! export {
+    ($name:ident) => {
+        #[doc(hidden)]
+        pub use $name::*;
+    };
+}
+
 /// Math extensions to perform all operations needed
 pub mod math;
-#[doc(hidden)]
-pub use math::*;
+export!{math}
 
+/*
 /// Elements related to the rendering process
 pub mod graph;
-#[doc(hidden)]
-pub use graph::*;
+export!{graph}
+*/
 
 /// Various utils
 pub mod extra;
-#[doc(hidden)]
-pub use extra::*;
+export!{extra}
 
+/*
 /// This module contains the elements related to the engine.
 /// This elements are supposed to be renderer independent, meaning that you should be able to use them in the same way, regardless of your compilation target or renderer choice
 pub mod engine;
-#[doc(hidden)]
-pub use engine::*;
+export!{engine}*/
 
+/*
 /// Renderer implementations (currently, OpenGL & WASM/WebGL)
 pub mod renderers;
-#[doc(hidden)]
-pub use renderers::*;
+export!{renderers}*/

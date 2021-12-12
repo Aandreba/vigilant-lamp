@@ -2,14 +2,16 @@ use std::ops::{Add, Index, IndexMut, Sub, Mul, Div};
 use derive_more::{AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use num::{Float, Num};
 
-#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug)]
-pub struct EucVec3<T: Num> {
+use super::EucVec2;
+
+#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone)]
+pub struct EucVec3<T: Num + Copy> {
     pub x: T,
     pub y: T,
     pub z: T
 }
 
-impl<T: Num> EucVec3<T> {
+impl<T: Num + Copy> EucVec3<T> {
     pub fn new (x: T, y: T, z: T) -> EucVec3<T> {
         EucVec3{x, y, z}
     }
@@ -38,10 +40,14 @@ impl<T: Num> EucVec3<T> {
             self.x * rhs.y - self.y * rhs.x
         )
     }
+
+    pub fn xy (&self) -> EucVec2<T> {
+        EucVec2::new(self.x, self.y)
+    }
 }
 
 // VECTOR - VECTOR
-impl<T: Num> Add<EucVec3<T>> for EucVec3<T> {
+impl<T: Num + Copy> Add<EucVec3<T>> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn add(self, rhs: EucVec3<T>) -> Self::Output {
@@ -53,7 +59,7 @@ impl<T: Num> Add<EucVec3<T>> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Sub<EucVec3<T>> for EucVec3<T> {
+impl<T: Num + Copy> Sub<EucVec3<T>> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn sub(self, rhs: EucVec3<T>) -> Self::Output {
@@ -65,7 +71,7 @@ impl<T: Num> Sub<EucVec3<T>> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Mul<EucVec3<T>> for EucVec3<T> {
+impl<T: Num + Copy> Mul<EucVec3<T>> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn mul(self, rhs: EucVec3<T>) -> Self::Output {
@@ -77,7 +83,7 @@ impl<T: Num> Mul<EucVec3<T>> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Div<EucVec3<T>> for EucVec3<T> {
+impl<T: Num + Copy> Div<EucVec3<T>> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn div(self, rhs: EucVec3<T>) -> Self::Output {
@@ -90,7 +96,7 @@ impl<T: Num> Div<EucVec3<T>> for EucVec3<T> {
 }
 
 // VECTOR - SCALAR
-impl<T: Num> Add<T> for EucVec3<T> {
+impl<T: Num + Copy> Add<T> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn add(self, rhs: T) -> Self::Output {
@@ -102,7 +108,7 @@ impl<T: Num> Add<T> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Sub<T> for EucVec3<T> {
+impl<T: Num + Copy> Sub<T> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn sub(self, rhs: T) -> Self::Output {
@@ -114,7 +120,7 @@ impl<T: Num> Sub<T> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Mul<T> for EucVec3<T> {
+impl<T: Num + Copy> Mul<T> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -126,7 +132,7 @@ impl<T: Num> Mul<T> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Div<T> for EucVec3<T> {
+impl<T: Num + Copy> Div<T> for EucVec3<T> {
     type Output = EucVec3<T>;
 
     fn div(self, rhs: T) -> Self::Output {
@@ -138,7 +144,7 @@ impl<T: Num> Div<T> for EucVec3<T> {
     }
 }
 
-impl<T: Num> Index<char> for EucVec3<T> {
+impl<T: Num + Copy> Index<char> for EucVec3<T> {
     type Output = T;
 
     fn index(&self, index: char) -> &Self::Output {
@@ -151,7 +157,7 @@ impl<T: Num> Index<char> for EucVec3<T> {
     }
 }
 
-impl<T: Num> IndexMut<char> for EucVec3<T> {
+impl<T: Num + Copy> IndexMut<char> for EucVec3<T> {
     fn index_mut(&mut self, index: char) -> &mut Self::Output {
         match index {
             'x' => &mut self.x,
