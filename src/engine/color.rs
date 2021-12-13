@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use crate::shaders::UniformValue;
 
 //use crate::shaders::UniformValue;
 /// Representation of a color
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Color (u32);
 
 // CONSTANTS
@@ -200,8 +202,14 @@ impl Color {
 }
 
 impl UniformValue for Color {
-    fn set_to_program<P: crate::shaders::Program> (self, program: &P, key: &P::Uniform) -> bool {
-        program.set_uint(key, self.0);
-        true
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+        let vec = &self.rgba_components_f32()[..];
+        vec.set_to_program(program, key)
+    }
+}
+
+impl Debug for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Color").field(&self.rgba_components_f32()).finish()
     }
 }

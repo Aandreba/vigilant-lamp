@@ -14,7 +14,9 @@ pub trait Camera {
     fn set_rotation (&mut self, value: Quaternion32);
 
     fn translate (&mut self, x: f32, y: f32, z: f32) {
-        self.set_position(*self.get_position() + EucVecf3::new(x, y, z))
+        self.get_position_mut().x += x;
+        self.get_position_mut().y += y;
+        self.get_position_mut().z += z;
     }
 
     fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {

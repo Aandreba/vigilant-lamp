@@ -5,6 +5,7 @@ use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, d
 use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::EucVecf2, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}};
 
 // RENDERER
+#[derive(Debug)]
 pub struct OpenGL {
     pub event_loop: EventLoop<()>
 }
@@ -75,6 +76,7 @@ impl Renderer for OpenGL {
         
                             scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
                             for elem in scene.objects.iter() {
+                                &elem.material.set_to_program_by_name(&scene.program, "material");
                                 scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
@@ -496,7 +498,7 @@ pub struct TextureGL(u32);
 impl Texture for TextureGL {}
 
 impl UniformValue for TextureGL {
-    fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
         program.set_uint(key, self.0);
         true
     }

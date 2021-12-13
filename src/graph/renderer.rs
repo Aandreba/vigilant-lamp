@@ -1,9 +1,9 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, fmt::Debug};
 use crate::{engine::{input::{KeyboardListener, MouseListener}}, Scene, Texture, ErrorType, ResultFlatMap};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
 // RENDERER
-pub trait Renderer: Sized {
+pub trait Renderer: Debug + Sized {
    type ErrorType;
    type WindowType: Window;
    type ProgramType: Program<Error = Self::ErrorType>;

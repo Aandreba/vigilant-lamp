@@ -2,8 +2,8 @@
 out vec4 final_color;
 
 struct Material {
-  color: uint;
-  texture: uint;
+  vec4 color;
+  uint texture;
 };
 
 uniform Material material;

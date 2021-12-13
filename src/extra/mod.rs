@@ -2,7 +2,6 @@ pub mod safe_zip;
 pub mod traits;
 pub mod array_builder;
 pub mod num_two;
-pub mod color;
 pub mod dyn_import;
 
 mod error_map;

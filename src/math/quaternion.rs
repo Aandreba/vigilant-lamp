@@ -5,6 +5,7 @@ use crate::{extra::num_two::NumericTwo, vector::EucVec3, matrix::{Mat3, Mat4}};
 pub type Quaternion32 = Quaternion<f32>;
 pub type Quaternion64 = Quaternion<f64>;
 
+#[derive(Debug)]
 pub struct Quaternion<T: Float> {
     pub w: T,
     pub i: T,

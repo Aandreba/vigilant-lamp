@@ -1,6 +1,7 @@
 use crate::{math::{quaternion::Quaternion32}, vector::EucVecf3, matrix::Matf4};
 
 /// Struct representing a 3d transformation of an element
+#[derive(Debug, Clone)]
 pub struct Transform {
     pub position: EucVecf3,
     pub rotation: Quaternion32,

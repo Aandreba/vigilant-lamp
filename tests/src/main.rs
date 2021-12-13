@@ -1,6 +1,5 @@
-use vigilant_lamp::color::Color;
 use vigilant_lamp::input::{KeyboardListener, KeyboardKey};
-use vigilant_lamp::{Script, Scene, Material};
+use vigilant_lamp::{Script, Scene, Material, Color};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
 pub fn main () {
@@ -33,9 +32,9 @@ fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(),
         Err(x) => Err(x),
         Ok(mesh) => {
             let material = Material::of_color(Color::YELLOW);
-            let mut obj = ObjectG::new(mesh, material);
+            let mut obj = ObjectG::of_mesh(mesh, material);
 
-            obj.transform.position[2] = -5.;
+            obj.transform.position.z = -5.;
             obj.transform.set_scale(0.5);
             
             scene.objects.push(obj);
@@ -52,7 +51,6 @@ fn default_script<R: Renderer> () -> Script<R> {
         obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
 
         if k.is_pressed(KeyboardKey::ESCAPE) {
-            println!("Death");
             panic!()
         } if k.is_pressed(KeyboardKey::W) {
             s.camera.translate(0., 0., -sec)
@@ -68,7 +66,7 @@ fn default_script<R: Renderer> () -> Script<R> {
             s.camera.translate(0., -sec, 0.)
         }
 
-        println!("{}", 1. / sec)
+        println!("{:?} / {:?}", obj.transform, &obj.material)
         //let mouse = m.relative_position();
         //s.camera.set_rotation(Quaternion32::from_angles(-mouse.y(), -mouse.x(), 0.))
     })
