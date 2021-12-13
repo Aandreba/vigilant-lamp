@@ -1,3 +1,5 @@
+use crate::shaders::UniformValue;
+
 //use crate::shaders::UniformValue;
 /// Representation of a color
 
@@ -197,10 +199,9 @@ impl Color {
     }
 }
 
-/*
 impl UniformValue for Color {
     fn set_to_program<P: crate::shaders::Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_uint(key, self.0);
         true
     }
-}*/
+}

@@ -3,8 +3,6 @@ use derive_more::{Neg, Add, Sub, AddAssign, SubAssign};
 use num::Num;
 use crate::vector::{EucVec4};
 
-use super::Mat3;
-
 // MAT2
 #[derive(Neg, Add, Sub, AddAssign, SubAssign, Debug, PartialEq, Eq, Clone)]
 pub struct Mat4<T: Num + Copy> {
@@ -13,6 +11,11 @@ pub struct Mat4<T: Num + Copy> {
     pub z: EucVec4<T>,
     pub w: EucVec4<T>
 }
+
+pub type Matu4 = Mat4<u64>;
+pub type Mati4 = Mat4<i64>;
+pub type Matf4 = Mat4<f32>;
+pub type Matd4 = Mat4<f64>;
 
 impl<T: Num + Copy> Mat4<T> {
     pub fn new (x: EucVec4<T>, y: EucVec4<T>, z: EucVec4<T>, w: EucVec4<T>) -> Mat4<T> {
@@ -99,6 +102,13 @@ impl<T: Num + Copy> Mul<T> for Mat4<T> {
             self.z * rhs,
             self.w * rhs
         )
+    }
+}
+
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for Mat4<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default(), z: Default::default(), w: Default::default() }
     }
 }
 

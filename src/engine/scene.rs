@@ -1,4 +1,4 @@
-use crate::{graph::{Renderer, Window}, math::matrix::Matrix4, shaders::Program, Clock, input::{KeyboardListener, MouseListener}};
+use crate::{graph::{Renderer, Window}, shaders::Program, Clock, input::{KeyboardListener, MouseListener}, matrix::Matf4};
 use super::{camera::{Camera}, objectg::ObjectG, script::{Script}};
 
 /// Struct containing all the inforation needed by the renderer about the contents and characteristics of the scene
@@ -15,12 +15,12 @@ impl<R: Renderer> Scene<R> {
         Scene { window, program, objects, camera: Box::new(camera), script }
     }
 
-    pub fn projection_matrix (&self) -> Matrix4<f32> {
+    pub fn projection_matrix (&self) -> Matf4 {
         let size = self.window.get_size();
         self.camera.projection_matrix(size.0, size.1)
     }
 
-    pub fn camera_matrix (&self) -> Matrix4<f32> {
+    pub fn camera_matrix (&self) -> Matf4 {
         self.projection_matrix() * self.camera.view_matrix()
     }
 

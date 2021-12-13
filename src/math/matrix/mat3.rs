@@ -11,6 +11,11 @@ pub struct Mat3<T: Num + Copy> {
     pub z: EucVec3<T>
 }
 
+pub type Matu3 = Mat3<u64>;
+pub type Mati3 = Mat3<i64>;
+pub type Matf3 = Mat3<f32>;
+pub type Matd3 = Mat3<f64>;
+
 impl<T: Num + Copy> Mat3<T> {
     pub fn new (x: EucVec3<T>, y: EucVec3<T>, z: EucVec3<T>) -> Mat3<T> {
         Mat3{x, y, z}
@@ -86,6 +91,13 @@ impl<T: Num + Copy> Mul<T> for Mat3<T> {
             self.y * rhs,
             self.z * rhs
         )
+    }
+}
+
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for Mat3<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default(), z: Default::default() }
     }
 }
 

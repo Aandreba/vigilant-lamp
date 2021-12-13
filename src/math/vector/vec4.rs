@@ -12,6 +12,11 @@ pub struct EucVec4<T: Num + Copy> {
     pub w: T
 }
 
+pub type EucVecu4 = EucVec4<u64>;
+pub type EucVeci4 = EucVec4<i64>;
+pub type EucVecf4 = EucVec4<f32>;
+pub type EucVecd4 = EucVec4<f64>;
+
 impl<T: Num + Copy> EucVec4<T> {
     pub fn new (x: T, y: T, z: T, w: T) -> EucVec4<T> {
         EucVec4{x, y, z, w}
@@ -146,5 +151,12 @@ impl<T: Num + Copy> Div<T> for EucVec4<T> {
            self.z / rhs,
            self.w / rhs
         )
+    }
+}
+
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for EucVec4<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default(), z: Default::default(), w: Default::default() }
     }
 }

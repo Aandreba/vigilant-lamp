@@ -12,6 +12,11 @@ pub struct Mat2<T: Num + Copy> {
     pub y: EucVec2<T>
 }
 
+pub type Matu2 = Mat2<u64>;
+pub type Mati2 = Mat2<i64>;
+pub type Matf2 = Mat2<f32>;
+pub type Matd2 = Mat2<f64>;
+
 impl<T: Num + Copy> Mat2<T> {
     pub fn new (x: EucVec2<T>, y: EucVec2<T>) -> Mat2<T> {
         Mat2{x, y}
@@ -72,6 +77,13 @@ impl<T: Num + Copy> Mul<T> for Mat2<T> {
             self.x * rhs,
             self.y * rhs
         )
+    }
+}
+
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for Mat2<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default() }
     }
 }
 

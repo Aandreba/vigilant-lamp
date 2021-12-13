@@ -1,4 +1,4 @@
-use crate::{color::Color, shaders::{UniformValue, Uniform}, Renderer, OptionFlatMap};
+use crate::{color::Color, shaders::{UniformValue, Uniform}, Renderer};
 
 #[derive(Debug)]
 pub struct Material<R: Renderer> {

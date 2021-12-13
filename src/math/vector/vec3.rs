@@ -11,6 +11,11 @@ pub struct EucVec3<T: Num + Copy> {
     pub z: T
 }
 
+pub type EucVecu3 = EucVec3<u64>;
+pub type EucVeci3 = EucVec3<i64>;
+pub type EucVecf3 = EucVec3<f32>;
+pub type EucVecd3 = EucVec3<f64>;
+
 impl<T: Num + Copy> EucVec3<T> {
     pub fn new (x: T, y: T, z: T) -> EucVec3<T> {
         EucVec3{x, y, z}
@@ -144,26 +149,9 @@ impl<T: Num + Copy> Div<T> for EucVec3<T> {
     }
 }
 
-impl<T: Num + Copy> Index<char> for EucVec3<T> {
-    type Output = T;
-
-    fn index(&self, index: char) -> &Self::Output {
-        match index {
-            'x' => &self.x,
-            'y' => &self.y,
-            'z' => &self.z,
-            _ => panic!("Invalid index")
-        }
-    }
-}
-
-impl<T: Num + Copy> IndexMut<char> for EucVec3<T> {
-    fn index_mut(&mut self, index: char) -> &mut Self::Output {
-        match index {
-            'x' => &mut self.x,
-            'y' => &mut self.y,
-            'z' => &mut self.z,
-            _ => panic!("Invalid index")
-        }
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for EucVec3<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default(), z: Default::default() }
     }
 }

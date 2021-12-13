@@ -8,6 +8,11 @@ pub struct EucVec2<T: Num + Copy> {
     pub y: T
 }
 
+pub type EucVecu2 = EucVec2<u64>;
+pub type EucVeci2 = EucVec2<i64>;
+pub type EucVecf2 = EucVec2<f32>;
+pub type EucVecd2 = EucVec2<f64>;
+
 impl<T: Num + Copy> EucVec2<T> {
     pub fn new (x: T, y: T) -> EucVec2<T> {
         EucVec2{x, y}
@@ -118,5 +123,12 @@ impl<T: Num + Copy> Div<T> for EucVec2<T> {
            self.x / rhs,
            self.y / rhs
         )
+    }
+}
+
+// OTHER TRAITS
+impl<T: Num + Copy + Default> Default for EucVec2<T> {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default() }
     }
 }

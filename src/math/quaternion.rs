@@ -1,7 +1,7 @@
 use num::Float;
 use std::{fmt::{Display, Formatter, Result}, ops::{Add, Sub, Mul, Div}};
 
-use crate::{extra::num_two::NumericTwo, vector::EucVec3};
+use crate::{extra::num_two::NumericTwo, vector::EucVec3, matrix::{Mat3, Mat4}};
 pub type Quaternion32 = Quaternion<f32>;
 pub type Quaternion64 = Quaternion<f64>;
 
@@ -94,7 +94,7 @@ impl<T: Float> Quaternion<T> {
         Quaternion::from_narray(norm.ln(), self.vector().unit() * (self.w / norm).acos())
     }
 
-    /*pub fn rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
+    pub fn rot_matrix (&self) -> Mat3<T> where T: NumericTwo {
         let one = T::one();
         let r2 = self.w * self.w;
         let i2 = self.i * self.i;
@@ -111,37 +111,14 @@ impl<T: Float> Quaternion<T> {
 
         let s = T::two() / (r2 + i2 + j2 + k2);
 
-        Matrix3::new([
-            NumArray([one - s * (j2 + k2), s * (ij - kr), s * (ik + jr)]),
-            NumArray([s * (ij + kr), one - s * (i2 + k2), s * (jk - ir)]),
-            NumArray([s * (ik - jr), s * (jk + ir), one - s * (i2 + j2)])
-        ])
+        Mat3::of(
+            one - s * (j2 + k2), s * (ij - kr), s * (ik + jr),
+            s * (ij + kr), one - s * (i2 + k2), s * (jk - ir),
+            s * (ik - jr), s * (jk + ir), one - s * (i2 + j2)
+        )
     }
 
-    pub fn point_rot_matrix (&self) -> Matrix3<T> where T: NumericTwo {
-        let one = T::one();
-        let two = T::two();
-
-        let i2 = two * self.i * self.i;
-        let j2 = two * self.j * self.j;
-        let k2 = two * self.k * self.k;
-        
-        let ir = two * self.i * self.w;
-        let ij = two * self.i * self.j;
-        let ik = two * self.i * self.k;
-
-        let jr = two * self.j * self.w;
-        let jk = two * self.j * self.k;
-        let kr = two * self.k * self.w;
-
-        Matrix3::new([
-            NumArray([one - k2 - j2, ij - kr, jr + ik]),
-            NumArray([ij + kr, one - k2 - i2, jk - ir]),
-            NumArray([ik - jr, jk + ir, one - j2 - i2])
-        ])
-    }
-
-    pub fn rot_matrix4 (&self) -> Matrix4<T> where T: NumericTwo {
+    pub fn rot_matrix4 (&self) -> Mat4<T> where T: NumericTwo {
         let zero = T::zero();
         let one = T::one();
 
@@ -160,38 +137,13 @@ impl<T: Float> Quaternion<T> {
 
         let s = T::two() / (r2 + i2 + j2 + k2);
 
-        Matrix4::new([
-            NumArray([one - s * (j2 + k2), s * (ij - kr), s * (ik + jr), zero]),
-            NumArray([s * (ij + kr), one - s * (i2 + k2), s * (jk - ir), zero]),
-            NumArray([s * (ik - jr), s * (jk + ir), one - s * (i2 + j2), zero]),
-            NumArray([zero, zero, zero, one])
-        ])
+        Mat4::of(
+            one - s * (j2 + k2), s * (ij - kr), s * (ik + jr), zero,
+            s * (ij + kr), one - s * (i2 + k2), s * (jk - ir), zero,
+            s * (ik - jr), s * (jk + ir), one - s * (i2 + j2), zero,
+            zero, zero, zero, one
+        )
     }
-
-    pub fn point_rot_matrix4 (&self) -> Matrix4<T> where T: NumericTwo {
-        let zero = T::zero();
-        let one = T::one();
-        let two = T::two();
-
-        let i2 = two * self.i * self.i;
-        let j2 = two * self.j * self.j;
-        let k2 = two * self.k * self.k;
-        
-        let ir = two * self.i * self.w;
-        let ij = two * self.i * self.j;
-        let ik = two * self.i * self.k;
-
-        let jr = two * self.j * self.w;
-        let jk = two * self.j * self.k;
-        let kr = two * self.k * self.w;
-
-        Matrix4::new([
-            NumArray([one - k2 - j2, ij - kr, jr + ik, zero]),
-            NumArray([ij + kr, one - k2 - i2, jk - ir, zero]),
-            NumArray([ik - jr, jk + ir, one - j2 - i2, zero]),
-            NumArray([zero, zero, zero, one])
-        ])
-    }*/
 }
 
 // ADDITION
