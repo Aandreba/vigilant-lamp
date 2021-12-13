@@ -21,15 +21,15 @@ pub trait Window {
     fn get_property_as<T: 'static> (&self, key: &str) -> Option<Box<T>> {
         let any = self.get_property(key).map(|x| x.downcast::<T>()).flattern(|| "Error");
         match any {
-            Err(x) => None,
+            Err(_) => None,
             Ok(x) => Some(x)
         }
     }
 
-    fn get_property_copy<T: 'static + Copy> (&self, key: &str) -> Option<T> {
+    fn get_property_copy_as<T: 'static + Copy> (&self, key: &str) -> Option<T> {
         let any = self.get_property(key).map(|x| x.downcast::<T>()).flattern(|| "Error");
         match any {
-            Err(x) => None,
+            Err(_) => None,
             Ok(x) => Some(*x.as_ref())
         }
     }

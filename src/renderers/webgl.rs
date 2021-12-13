@@ -1,24 +1,38 @@
 use std::any::Any;
+use std::any::TypeId;
 use std::rc::Rc;
 use std::str::FromStr;
 
 use game_loop::game_loop;
-use js_sys::JsString;
-use js_sys::Object;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::Clamped;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 
 use web_sys::Element;
 use web_sys::HtmlCanvasElement;
+use web_sys::ImageData;
 use web_sys::WebGl2RenderingContext;
 use web_sys::WebGlBuffer;
+use web_sys::WebGlTexture;
 use web_sys::WebGlUniformLocation;
 use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGlProgram, WebGlShader};
 
-use crate::ErrorType;
-use crate::FlatMap;
-use crate::Flattern;
+use crate::Texture;
+use crate::matrix::Matd2;
+use crate::matrix::Matd3;
+use crate::matrix::Matd4;
+use crate::matrix::Matf2;
+use crate::matrix::Matf3;
+use crate::matrix::Matf4;
+use crate::shaders::UniformValue;
+use crate::vector::EucVecd2;
+use crate::vector::EucVecd3;
+use crate::vector::EucVecd4;
+use crate::vector::EucVecf2;
+use crate::vector::EucVecf3;
+use crate::vector::EucVecf4;
+use crate::{Flattern, OptionFlatMap, ResultFlatMap};
 use crate::engine::Clock;
 use crate::engine::input::KeyboardListener;
 use crate::engine::input::MouseListener;
@@ -26,7 +40,6 @@ use crate::engine::Scene;
 use crate::graph::Window;
 use crate::graph::{Renderer, shaders::{Program, Uniform, VertexShader, FragmentShader}, Mesh};
 use crate::input::KeyboardKey;
-use crate::math::array_ext::NumArray;
 
 #[derive(Debug)]
 struct SharedData {
@@ -163,10 +176,11 @@ impl WebGL {
         scene.window.clear();
 
         self.bind_program(&scene.program);
-        scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
+        scene.program.set_float_mat4_by_name("camera", &scene.camera_matrix());
         
         for elem in scene.objects.iter() {
-            scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
+            scene.program.set_float_mat4_by_name("world_matrix", &elem.transform.matrix());
+            elem.material.set_to_program_by_name(&scene.program, "material");
             self.draw_mesh(&elem.mesh)
         }
 
@@ -179,6 +193,7 @@ impl Renderer for WebGL {
     type WindowType = WindowWGL;
     type ProgramType = ProgramWGL;
     type MeshType = MeshWGL;
+    type TextureType = WebGlTexture;
     type KeyboardListenerType = KeyboardListenerWGL;
     type MouseListenerType = MouseListenerWGL;
 
@@ -260,6 +275,59 @@ impl Renderer for WebGL {
         self.data.context.bind_vertex_array(None);
     }
 
+    fn create_texture (&self, size: (u32, u32), bytes: Vec<u8>) -> Result<WebGlTexture, JsValue> {
+        let id = self.data.context.create_texture();
+        self.data.context.bind_texture(WebGl2RenderingContext::TEXTURE_2D, id.as_ref());
+
+        match id {
+            None => Err(JsValue::from_str("Error generating texture")),
+            Some(id) => {
+                let clamped : Clamped<&[u8]> = Clamped(bytes.as_slice());
+                let data : Result<(), JsValue> = ImageData::new_with_u8_clamped_array_and_sh(clamped, size.0, size.1)
+                    .flat_map_single(|data| {
+                        self.data.context.tex_image_2d_with_u32_and_u32_and_image_data(
+                            WebGl2RenderingContext::TEXTURE_2D,
+                            0,
+                            WebGl2RenderingContext::RGBA as i32,
+                            WebGl2RenderingContext::RGBA,
+                            WebGl2RenderingContext::UNSIGNED_BYTE,
+                            &data
+                        )
+                    }
+                );
+        
+                match data {
+                    Err(x) => Err(x),
+                    Ok(_) => {
+                        if size.0.is_power_of_two() && size.1.is_power_of_two() {
+                            self.data.context.generate_mipmap(WebGl2RenderingContext::RGBA);
+                        } else {
+                            self.data.context.tex_parameteri(
+                                WebGl2RenderingContext::TEXTURE_2D,
+                                WebGl2RenderingContext::TEXTURE_WRAP_S,
+                                WebGl2RenderingContext::CLAMP_TO_EDGE as i32
+                            );
+        
+                            self.data.context.tex_parameteri(
+                                WebGl2RenderingContext::TEXTURE_2D,
+                                WebGl2RenderingContext::TEXTURE_WRAP_T,
+                                WebGl2RenderingContext::CLAMP_TO_EDGE as i32
+                            );
+        
+                            self.data.context.tex_parameteri(
+                                WebGl2RenderingContext::TEXTURE_2D,
+                                WebGl2RenderingContext::TEXTURE_MIN_FILTER,
+                                WebGl2RenderingContext::LINEAR as i32
+                            );
+                        }
+        
+                        Ok(id)
+                    }
+                }
+            }
+        }
+    }
+
     fn create_vertex_shader (&self, code: &str) -> Result<VertexWGL, JsValue> {
         self.create_shader(WebGl2RenderingContext::VERTEX_SHADER, code).map(|x| VertexWGL(x))
     }
@@ -278,7 +346,7 @@ impl Renderer for WebGL {
             Ok(_) => {
                 let mut clock = Clock::new();
                 let keyboard_listener = KeyboardListenerWGL([false; 161]);
-                let mouse_listener = MouseListenerWGL(NumArray::zero());
+                let mouse_listener = MouseListenerWGL(EucVecf2::default());
 
                 match scene.script.start {
                     Some(x) => x(&mut scene),
@@ -457,27 +525,51 @@ impl Program for ProgramWGL {
         unimplemented!()
     }
 
-    fn set_float_mat2 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix2<f32>) {
+    fn set_float_vec2 (&self, key: &Self::Uniform, value: &EucVecf2) {
+        self.data.context.uniform2f(key.id.as_ref(), value.x, value.y)
+    }
+
+    fn set_float_vec3 (&self, key: &Self::Uniform, value: &EucVecf3) {
+        self.data.context.uniform3f(key.id.as_ref(), value.x, value.y, value.z)
+    }
+
+    fn set_float_vec4 (&self, key: &Self::Uniform, value: &EucVecf4) {
+        self.data.context.uniform4f(key.id.as_ref(), value.x, value.y, value.z, value.w)
+    }
+
+    fn set_double_vec2 (&self, key: &Self::Uniform, value: &EucVecd2) {
+        unimplemented!()
+    }
+
+    fn set_double_vec3 (&self, key: &Self::Uniform, value: &EucVecd3) {
+        unimplemented!()
+    }
+
+    fn set_double_vec4 (&self, key: &Self::Uniform, value: &EucVecd4) {
+        unimplemented!()
+    }
+
+    fn set_float_mat2 (&self, key: &Self::Uniform, value: &Matf2) {
         self.data.context.uniform_matrix2fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_float_mat3 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix3<f32>) {
+    fn set_float_mat3 (&self, key: &Self::Uniform, value: &Matf3) {
         self.data.context.uniform_matrix3fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_float_mat4 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix4<f32>) {
+    fn set_float_mat4 (&self, key: &Self::Uniform, value: &Matf4) {
         self.data.context.uniform_matrix4fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_double_mat2 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix2<f64>) {
+    fn set_double_mat2 (&self, key: &Self::Uniform, value: &Matd2) {
         unimplemented!()
     }
 
-    fn set_double_mat3 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix3<f64>) {
+    fn set_double_mat3 (&self, key: &Self::Uniform, value: &Matd3) {
         unimplemented!()
     }
 
-    fn set_double_mat4 (&self, key: &Self::Uniform, value: crate::math::matrix::Matrix4<f64>) {
+    fn set_double_mat4 (&self, key: &Self::Uniform, value: &Matd4) {
         unimplemented!()
     }
 }
@@ -513,6 +605,24 @@ impl Mesh for MeshWGL {
     }
 }
 
+// TEXTURE
+// I'M NOT HAPPY WITH THIS. IN THE FUTURE, TYPE SAFETY MUST BE GUARANTEED
+impl UniformValue for WebGlTexture  {
+    fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
+        unsafe {
+            let program = &*(self as *const dyn Any as *const ProgramWGL);
+            let key = &*(self as *const dyn Any as *const UniformWGL);
+
+            program.data.context.active_texture(WebGl2RenderingContext::TEXTURE0);
+            program.data.context.bind_texture(WebGl2RenderingContext::TEXTURE_2D, Some(self));
+            program.set_uint(key, 0);
+            true
+        }
+    }
+}
+
+impl Texture for WebGlTexture {}
+
 // LISTENERS
 pub struct KeyboardListenerWGL ([bool;161]);
 
@@ -522,11 +632,11 @@ impl KeyboardListenerWGL {
     }
 }
 
-pub struct MouseListenerWGL (NumArray<f32,2>);
+pub struct MouseListenerWGL (EucVecf2);
 
 impl MouseListenerWGL {
     pub fn new () -> MouseListenerWGL {
-        MouseListenerWGL(NumArray::zero())
+        MouseListenerWGL(EucVecf2::default())
     }
 }
 
@@ -541,8 +651,8 @@ impl KeyboardListener for KeyboardListenerWGL {
 }
 
 impl MouseListener for MouseListenerWGL {
-    fn relative_position (&self) -> NumArray<f32, 2> {
-        self.0
+    fn relative_position (&self) -> EucVecf2{
+        self.0.clone()
     }
 
     fn init () -> Self {

@@ -49,4 +49,4 @@ impl<R: Renderer> UniformValue for Material<R> {
     }
 }
 
-pub trait Texture: UniformValue + Debug {} 
+pub trait Texture: UniformValue {} 

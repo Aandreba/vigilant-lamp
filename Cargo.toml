@@ -41,5 +41,7 @@ features = [
   'WebGlVertexArrayObject',
   'WebGlUniformLocation',
   'WebGlFramebuffer',
+  'WebGlTexture',
+  'ImageData',
   'Window'
 ]

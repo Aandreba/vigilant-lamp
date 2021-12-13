@@ -2,7 +2,6 @@ use crate::{Material, Renderer};
 use crate::engine::transform::Transform;
 
 /// Element containing all needed information a game object
-#[derive(Debug)]
 pub struct ObjectG<R: Renderer> {    
     pub mesh: R::MeshType,
     pub transform: Transform,

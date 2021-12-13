@@ -3,7 +3,7 @@ out vec4 final_color;
 
 struct Material {
   vec4 color;
-  uint texture;
+  sampler2D texture;
 };
 
 uniform Material material;
