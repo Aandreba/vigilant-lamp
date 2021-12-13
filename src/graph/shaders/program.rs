@@ -1,4 +1,5 @@
-use crate::math::matrix::{Matrix2, Matrix3, Matrix4};
+use crate::matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4};
+
 use super::{shader::{FragmentShader, VertexShader}};
 
 pub trait Program {
@@ -24,13 +25,13 @@ pub trait Program {
     fn set_floats (&self, key: &Self::Uniform, value: &[f32]);
     fn set_doubles (&self, key: &Self::Uniform, value: &[f64]);
 
-    fn set_float_mat2 (&self, key: &Self::Uniform, value: Matrix2<f32>);
-    fn set_float_mat3 (&self, key: &Self::Uniform, value: Matrix3<f32>);
-    fn set_float_mat4 (&self, key: &Self::Uniform, value: Matrix4<f32>);
+    fn set_float_mat2 (&self, key: &Self::Uniform, value: Matf2);
+    fn set_float_mat3 (&self, key: &Self::Uniform, value: Matf3);
+    fn set_float_mat4 (&self, key: &Self::Uniform, value: Matf4);
 
-    fn set_double_mat2 (&self, key: &Self::Uniform, value: Matrix2<f64>);
-    fn set_double_mat3 (&self, key: &Self::Uniform, value: Matrix3<f64>);
-    fn set_double_mat4 (&self, key: &Self::Uniform, value: Matrix4<f64>);
+    fn set_double_mat2 (&self, key: &Self::Uniform, value: Matd2);
+    fn set_double_mat3 (&self, key: &Self::Uniform, value: Matd3);
+    fn set_double_mat4 (&self, key: &Self::Uniform, value: Matd4);
 
     fn get_uniform (&self, name: &str) -> Option<&Self::Uniform> {
         self.get_uniforms().iter().find(|x| x.get_name() == name)
@@ -136,7 +137,7 @@ pub trait Program {
         return true
     }
 
-    fn set_float_mat2_by_name (&self, key: &str, value : Matrix2<f32>) -> bool {
+    fn set_float_mat2_by_name (&self, key: &str, value : Matf2) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_float_mat2(x, value),
@@ -146,7 +147,7 @@ pub trait Program {
         return true
     }
 
-    fn set_float_mat3_by_name (&self, key: &str, value: Matrix3<f32>) -> bool {
+    fn set_float_mat3_by_name (&self, key: &str, value: Matf3) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_float_mat3(x, value),
@@ -156,7 +157,7 @@ pub trait Program {
         return true
     }
 
-    fn set_float_mat4_by_name (&self, key: &str, value: Matrix4<f32>) -> bool {
+    fn set_float_mat4_by_name (&self, key: &str, value: Matf4) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_float_mat4(x, value),
@@ -166,7 +167,7 @@ pub trait Program {
         return true
     }
 
-    fn set_double_mat2_by_name (&self, key: &str, value: Matrix2<f64>) -> bool {
+    fn set_double_mat2_by_name (&self, key: &str, value: Matd2) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_double_mat2(x, value),
@@ -176,7 +177,7 @@ pub trait Program {
         return true
     }
 
-    fn set_double_mat3_by_name (&self, key: &str, value: Matrix3<f64>) -> bool {
+    fn set_double_mat3_by_name (&self, key: &str, value: Matd3) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_double_mat3(x, value),
@@ -186,7 +187,7 @@ pub trait Program {
         return true
     }
 
-    fn set_double_mat4_by_name (&self, key: &str, value: Matrix4<f64>) -> bool {
+    fn set_double_mat4_by_name (&self, key: &str, value: Matd4) -> bool {
         let id = self.get_uniform(key);
         match id {
             Some(x) => self.set_double_mat4(x, value),

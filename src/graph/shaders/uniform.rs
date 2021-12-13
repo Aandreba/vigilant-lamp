@@ -1,5 +1,4 @@
-use crate::math::matrix::{Matrix2, Matrix3, Matrix4};
-
+use crate::matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4};
 use super::program::{Program};
 
 // UNIFORM VALUES
@@ -72,21 +71,21 @@ impl UniformValue for &[f32] {
     }
 }
 
-impl UniformValue for Matrix2<f32> {
+impl UniformValue for Matf2 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_float_mat2(key, self);
         true
     }
 }
 
-impl UniformValue for Matrix3<f32> {
+impl UniformValue for Matf3 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_float_mat3(key, self);
         true
     }
 }
 
-impl UniformValue for Matrix4<f32> {
+impl UniformValue for Matf4 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_float_mat4(key, self);
         true
@@ -107,21 +106,21 @@ impl<const S: usize> UniformValue for [f64;S] {
     }
 }
 
-impl UniformValue for Matrix2<f64> {
+impl UniformValue for Matd2 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_double_mat2(key, self);
         true
     }
 }
 
-impl UniformValue for Matrix3<f64> {
+impl UniformValue for Matd3 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_double_mat3(key, self);
         true
     }
 }
 
-impl UniformValue for Matrix4<f64> {
+impl UniformValue for Matd4 {
     fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
         program.set_double_mat4(key, self);
         true
