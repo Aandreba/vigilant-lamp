@@ -1,4 +1,3 @@
-use core::panic;
 use std::{str::FromStr};
 use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
@@ -76,7 +75,7 @@ impl Renderer for OpenGL {
         
                             scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
                             for elem in scene.objects.iter() {
-                                &elem.material.set_to_program_by_name(&scene.program, "material");
+                                elem.material.set_to_program_by_name(&scene.program, "material");
                                 scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
@@ -433,6 +432,7 @@ impl Uniform for UniformGL  {
 }
 
 // MESH
+#[derive(Debug)]
 pub struct MeshGL {
     id: u32,
     vertices: u32,

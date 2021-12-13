@@ -1,4 +1,5 @@
-use vigilant_lamp::input::{KeyboardListener, KeyboardKey};
+use vigilant_lamp::input::{KeyboardListener, KeyboardKey, MouseListener};
+use vigilant_lamp::quaternion::Quaternion32;
 use vigilant_lamp::{Script, Scene, Material, Color};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
@@ -48,7 +49,7 @@ fn default_script<R: Renderer> () -> Script<R> {
         let sec = d.as_secs_f32();
         let obj = &mut s.objects[0];
 
-        obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
+        //obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
 
         if k.is_pressed(KeyboardKey::ESCAPE) {
             panic!()
@@ -66,8 +67,8 @@ fn default_script<R: Renderer> () -> Script<R> {
             s.camera.translate(0., -sec, 0.)
         }
 
-        println!("{:?} / {:?}", obj.transform, &obj.material)
-        //let mouse = m.relative_position();
-        //s.camera.set_rotation(Quaternion32::from_angles(-mouse.y(), -mouse.x(), 0.))
+        let mouse = m.relative_position();
+        s.camera.set_rotation(Quaternion32::from_angles(-mouse.y, -mouse.x, 0.));
+        //println!("{:?}", s.camera.get_rotation())
     })
 }

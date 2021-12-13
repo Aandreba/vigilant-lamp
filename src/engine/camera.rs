@@ -33,7 +33,6 @@ pub trait Camera {
         );
 
         self.get_rotation().rot_matrix4().transp() * position
-        // position * self.get_rotation().point_rot_matrix4()
     }
 
     fn camera_matrix (&self, width: u32, height: u32) -> Matf4 {

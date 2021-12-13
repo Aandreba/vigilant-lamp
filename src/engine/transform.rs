@@ -42,8 +42,8 @@ impl Transform {
     }
 
     pub fn rotate (&mut self, roll: f32, pitch: f32, yaw: f32) {
-        self.rotation = self.rotation * Quaternion32::from_angles(roll, pitch, yaw);
-        self.rotation = self.rotation.unit();
+        let rot = self.rotation * Quaternion32::from_angles(roll, pitch, yaw);
+        self.rotation = rot.unit();
     }
 
     pub fn position_matrix (&self) -> Matf4 {
@@ -57,9 +57,9 @@ impl Transform {
 
     pub fn scale_matrix (&self) -> Matf4 {
         Matf4::of(
-            self.position.x, 0., 0., 0.,
-            0., self.position.y, 0., 0.,
-            0., 0., self.position.z, 0.,
+            self.scale.x, 0., 0., 0.,
+            0., self.scale.y, 0., 0.,
+            0., 0., self.scale.z, 0.,
             0., 0., 0., 1.
         )
     }
