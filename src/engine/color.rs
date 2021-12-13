@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::shaders::UniformValue;
+use crate::{shaders::UniformValue, vector::EucVecf4};
 
 //use crate::shaders::UniformValue;
 /// Representation of a color
@@ -203,7 +203,7 @@ impl Color {
 
 impl UniformValue for Color {
     fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        let vec = &self.rgba_components_f32()[..];
+        let vec = EucVecf4::new(self.red_f32(), self.green_f32(), self.blue_f32(), self.alpha_f32());
         vec.set_to_program(program, key)
     }
 }

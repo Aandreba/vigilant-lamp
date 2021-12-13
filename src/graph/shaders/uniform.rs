@@ -73,21 +73,21 @@ impl UniformValue for &[f32] {
 
 impl UniformValue for Matf2 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_float_mat2(key, self.clone());
+        program.set_float_mat2(key, self);
         true
     }
 }
 
 impl UniformValue for Matf3 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_float_mat3(key, self.clone());
+        program.set_float_mat3(key, self);
         true
     }
 }
 
 impl UniformValue for Matf4 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_float_mat4(key, self.clone());
+        program.set_float_mat4(key, self);
         true
     }
 }
@@ -108,21 +108,21 @@ impl<const S: usize> UniformValue for [f64;S] {
 
 impl UniformValue for Matd2 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_double_mat2(key, self.clone());
+        program.set_double_mat2(key, self);
         true
     }
 }
 
 impl UniformValue for Matd3 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_double_mat3(key, self.clone());
+        program.set_double_mat3(key, self);
         true
     }
 }
 
 impl UniformValue for Matd4 {
     fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
-        program.set_double_mat4(key, self.clone());
+        program.set_double_mat4(key, self);
         true
     }
 }

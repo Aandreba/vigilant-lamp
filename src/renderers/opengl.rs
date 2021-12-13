@@ -1,7 +1,7 @@
 use std::{str::FromStr};
-use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE};
+use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::EucVecf2, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}};
+use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::{EucVecf2, EucVecd2, EucVecd3, EucVecd4, EucVecf3, EucVecf4}, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}};
 
 // RENDERER
 #[derive(Debug)]
@@ -73,10 +73,10 @@ impl Renderer for OpenGL {
                                 None => ()
                             }
         
-                            scene.program.set_float_mat4_by_name("camera", scene.camera_matrix());
+                            scene.program.set_float_mat4_by_name("camera", &scene.camera_matrix());
                             for elem in scene.objects.iter() {
-                                elem.material.set_to_program_by_name(&scene.program, "material");
-                                scene.program.set_float_mat4_by_name("world_matrix", elem.transform.matrix());
+                                println!("{}", elem.material.set_to_program_by_name(&scene.program, "material"));
+                                scene.program.set_float_mat4_by_name("world_matrix", &elem.transform.matrix());
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
 
@@ -380,19 +380,37 @@ impl Program for ProgramGL {
         }   
     }
 
-    fn set_float_mat2(&self, key: &Self::Uniform, value: Matf2) {
+    fn set_float_vec2 (&self, key: &Self::Uniform, value: &EucVecf2) {
+        unsafe {
+            glUniform2f(key.id, value.x, value.y)
+        }
+    }
+
+    fn set_float_vec3 (&self, key: &Self::Uniform, value: &EucVecf3) {
+        unsafe {
+            glUniform3f(key.id, value.x, value.y, value.z)
+        }
+    }
+
+    fn set_float_vec4 (&self, key: &Self::Uniform, value: &EucVecf4) {
+        unsafe {
+            glUniform4f(key.id, value.x, value.y, value.z, value.w)
+        }
+    }
+
+    fn set_float_mat2(&self, key: &Self::Uniform, value: &Matf2) {
         unsafe {
             glUniformMatrix2fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat3(&self, key: &Self::Uniform, value: Matf3) {
+    fn set_float_mat3(&self, key: &Self::Uniform, value: &Matf3) {
         unsafe {
             glUniformMatrix3fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat4(&self, key: &Self::Uniform, value: Matf4) {
+    fn set_float_mat4(&self, key: &Self::Uniform, value: &Matf4) {
         unsafe {
             glUniformMatrix4fv(key.id, 1, 1, value.flat().as_ptr())
         }
@@ -406,20 +424,33 @@ impl Program for ProgramGL {
         unimplemented!() 
     }
 
-    fn set_double_mat2(&self, key: &Self::Uniform, value: Matd2) {
+    fn set_double_vec2 (&self, key: &Self::Uniform, value: &EucVecd2) {
         unimplemented!()
     }
 
-    fn set_double_mat3(&self, key: &Self::Uniform, value: Matd3) {
+    fn set_double_vec3 (&self, key: &Self::Uniform, value: &EucVecd3) {
         unimplemented!()
     }
 
-    fn set_double_mat4(&self, key: &Self::Uniform, value: Matd4) {
+    fn set_double_vec4 (&self, key: &Self::Uniform, value: &EucVecd4) {
+        unimplemented!()
+    }
+
+    fn set_double_mat2(&self, key: &Self::Uniform, value: &Matd2) {
+        unimplemented!()
+    }
+
+    fn set_double_mat3(&self, key: &Self::Uniform, value: &Matd3) {
+        unimplemented!()
+    }
+
+    fn set_double_mat4(&self, key: &Self::Uniform, value: &Matd4) {
         unimplemented!()
     }
 }
 
 // UNIFORMS
+#[derive(Debug)]
 pub struct UniformGL {
     name: String,
     id: i32

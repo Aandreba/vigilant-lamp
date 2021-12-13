@@ -1,6 +1,8 @@
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Sub, Mul, Div, Deref};
 use derive_more::{AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use num::{Float, Num};
+
+use crate::shaders::UniformValue;
 
 #[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone)]
 pub struct EucVec2<T: Num + Copy> {
@@ -127,6 +129,20 @@ impl<T: Num + Copy> Div<T> for EucVec2<T> {
 }
 
 // OTHER TRAITS
+impl UniformValue for EucVecf2 {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+        program.set_float_vec2(key, self);
+        true
+    }
+}
+
+impl UniformValue for EucVecd2 {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+        program.set_double_vec2(key, self);
+        true
+    }
+}
+
 impl<T: Num + Copy + Default> Default for EucVec2<T> {
     fn default() -> Self {
         Self { x: Default::default(), y: Default::default() }

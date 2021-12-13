@@ -60,7 +60,7 @@ fn build_gl<R: Renderer> (vertex_inc: &str, fragment_inc: &str, renderer: &R) ->
             let fragment = renderer.create_fragment_shader(fragment_inc);
             match fragment {
                 Err(z) => Err(z),
-                Ok(z) => renderer.create_program(x, z, &["world_matrix", "camera", "material"])
+                Ok(z) => renderer.create_program(x, z, &["world_matrix", "camera", "material.color", "material.texture"])
             }
         }
     }

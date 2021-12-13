@@ -1,3 +1,5 @@
+#![feature(concat_idents)]
+
 macro_rules! export {
     ($name:ident) => {
         #[doc(hidden)]

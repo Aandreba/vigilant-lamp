@@ -47,7 +47,7 @@ impl<T: Num + Copy> Mat3<T> {
         + self.x.z * (self.x.x * self.y.y - self.x.y * self.y.x)
     }
 
-    pub fn flat (self) -> [T; 9] {
+    pub fn flat (&self) -> [T; 9] {
         [
             self.x.x, self.x.y, self.x.z, 
             self.y.x, self.y.y, self.y.z,
