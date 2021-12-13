@@ -2,7 +2,7 @@ use core::panic;
 use std::{str::FromStr};
 use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, math::{array_ext::NumArray, matrix::{Matrix2, Matrix3, Matrix4}}, ResultFlatMap, Texture, shaders::UniformValue};
+use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::EucVecf2, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}};
 
 // RENDERER
 pub struct OpenGL {
@@ -60,7 +60,7 @@ impl Renderer for OpenGL {
                             let y = 2. * position.y / (size.1 as f64) - 1.;
                             
                             // TODO FIX
-                            mouse.position = NumArray([x as f32, y as f32])
+                            mouse.position = EucVecf2::new(x as f32, y as f32)
                         }
         
                         // REDRAW EVENT (UPDATE)
@@ -379,42 +379,42 @@ impl Program for ProgramGL {
         }   
     }
 
-    fn set_float_mat2(&self, key: &Self::Uniform, value: Matrix2<f32>) {
+    fn set_float_mat2(&self, key: &Self::Uniform, value: Matf2) {
         unsafe {
             glUniformMatrix2fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat3(&self, key: &Self::Uniform, value: Matrix3<f32>) {
+    fn set_float_mat3(&self, key: &Self::Uniform, value: Matf3) {
         unsafe {
             glUniformMatrix3fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat4(&self, key: &Self::Uniform, value: Matrix4<f32>) {
+    fn set_float_mat4(&self, key: &Self::Uniform, value: Matf4) {
         unsafe {
             glUniformMatrix4fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
     fn set_double(&self, key: &Self::Uniform, value: f64) {
-        panic!("Unsuported operation")
+        unimplemented!()
     }
 
     fn set_doubles (&self, key: &Self::Uniform, value: &[f64]) {
-        panic!("Unsuported operation")  
+        unimplemented!() 
     }
 
-    fn set_double_mat2(&self, key: &Self::Uniform, value: Matrix2<f64>) {
-        panic!("Unsuported operation")
+    fn set_double_mat2(&self, key: &Self::Uniform, value: Matd2) {
+        unimplemented!()
     }
 
-    fn set_double_mat3(&self, key: &Self::Uniform, value: Matrix3<f64>) {
-        panic!("Unsuported operation")
+    fn set_double_mat3(&self, key: &Self::Uniform, value: Matd3) {
+        unimplemented!()
     }
 
-    fn set_double_mat4(&self, key: &Self::Uniform, value: Matrix4<f64>) {
-        panic!("Unsuported operation")
+    fn set_double_mat4(&self, key: &Self::Uniform, value: Matd4) {
+        unimplemented!()
     }
 }
 
@@ -496,10 +496,12 @@ pub struct TextureGL(u32);
 impl Texture for TextureGL {}
 
 impl UniformValue for TextureGL {
-    fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) {
-        program.set_uint(key, self.0)
+    fn set_to_program<P: Program> (self, program: &P, key: &P::Uniform) -> bool {
+        program.set_uint(key, self.0);
+        true
     }
 }
+
 // lISTENERS
 const KEYBOARD_MAPPING : [KeyboardKey; 161] = [
     KeyboardKey::ONE,
@@ -698,15 +700,15 @@ impl KeyboardListener for KeyboardListenerGL {
 }
 
 pub struct MouseListenerGL {
-    position: NumArray<f32, 2>
+    position: EucVecf2
 }
 
 impl MouseListener for MouseListenerGL {
     fn init () -> Self {
-        MouseListenerGL { position: NumArray::zero() }
+        MouseListenerGL { position: EucVecf2::default() }
     }
 
-    fn relative_position (&self) -> NumArray<f32, 2> {
+    fn relative_position (&self) -> EucVecf2 {
         self.position.clone()
     }
 }

@@ -47,6 +47,15 @@ impl<T: Num + Copy> Mat4<T> {
     pub fn det (&self) -> T {
         todo!()
     }
+
+    pub fn flat (self) -> [T; 16] {
+        [
+            self.x.x, self.x.y, self.x.z, self.x.w,
+            self.y.x, self.y.y, self.y.z, self.y.w,
+            self.z.x, self.z.y, self.z.z, self.z.w,
+            self.w.x, self.w.y, self.w.z, self.w.w
+        ]
+    }
 }
 
 

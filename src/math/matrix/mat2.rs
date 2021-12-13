@@ -40,6 +40,10 @@ impl<T: Num + Copy> Mat2<T> {
     pub fn det (&self) -> T {
         self.x.x * self.y.y - self.x.y * self.y.x
     }
+
+    pub fn flat (self) -> [T; 4] {
+        [self.x.x, self.x.y, self.y.x, self.y.y]
+    }
 }
 
 
