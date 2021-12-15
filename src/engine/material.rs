@@ -1,5 +1,5 @@
 use std::fmt::{Debug};
-use crate::{shaders::{UniformValue, Uniform}, Renderer, Color};
+use crate::{shaders::{UniformValue}, Renderer, Color};
 
 #[derive(Debug, Clone)]
 pub struct Material<R: Renderer> {

@@ -74,9 +74,9 @@ impl Renderer for OpenGL {
                             }
                             
                             scene.camera_matrix().set_to_program_by_name(&mut scene.program, "camera");
-
                             for elem in scene.objects.iter() {
                                 elem.transform.matrix().set_to_program_by_name(&mut scene.program, "world_matrix");
+                                elem.material.set_to_program_by_name(&mut scene.program, "material");
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
 

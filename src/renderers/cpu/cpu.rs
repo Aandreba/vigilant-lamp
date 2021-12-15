@@ -20,46 +20,39 @@ pub trait DrawCanvas {
 
 impl<C: CanvasCPU> DrawCanvas for Arc<Mutex<C>> {
     fn fill_rectangle (self, a: (u32, u32), b: (u32, u32), color: Color) {
-            ((a.0..b.0)).into_par_iter().for_each(|x| {
-                let mut lock = self.lock().unwrap();
-                lock.set_pixel(x, 1, color)
-            })
+            for i in a.0..b.0 {
+                for j in a.1..b.1 {
+                    let mut lock = self.lock().unwrap();
+                    lock.set_pixel(i, j, color)
+                }
+            }
         }
 
     fn fill_triangle (self, a: (u32, u32), b: (u32, u32), c: (u32, u32), color: Color) {
-        fn dist (from: &(u32, u32), to: &(u32, u32)) -> f32 {
-            let x = to.0.abs_diff(from.0) as f32;
-            let y = to.1.abs_diff(from.1) as f32;
-            x.hypot(y)
-        }
-
-        fn area (a: f32, b: f32, c: f32) -> f32 {
-            let s = (a + b + c) / 2.;
-            (s * (s - a) * (s - b) * (s - c)).sqrt()
+        fn area (a: &(i32, i32), b: &(i32, i32), c: &(i32, i32)) -> f32 {
+            let s = a.0 * (b.1 - c.1) + b.0 * (c.1 - a.1) + c.0 * (a.1 - b.1);
+            (s.abs() as f32) / 2.
         }
         
-        let ab = dist(&a, &b);
-        let bc = dist(&b, &c);
-        let ca = dist(&c, &a);
-        let abc = area(ab, bc, ca);
+        let a : (i32, i32) = (a.0 as i32, a.1 as i32);
+        let b : (i32, i32) = (b.0 as i32, b.1 as i32);
+        let c : (i32, i32) = (c.0 as i32, c.1 as i32);
+        let abc = area(&a, &b, &c);
 
-        let from = (a.0.min(b.0.min(c.0)), a.1.min(b.1.min(c.1)));
-        let to = (a.0.max(b.0.max(c.0)), a.1.max(b.1.max(c.1)));
+        let from = (a.0.min(b.0.min(c.0)) as i32, a.1.min(b.1.min(c.1)) as i32);
+        let to = (a.0.max(b.0.max(c.0)) as i32, a.1.max(b.1.max(c.1)) as i32);
 
+        println!("{:?} {:?}", from, to);
         (from.0..to.0).into_par_iter().for_each(|x| {
             (from.1..to.1).into_par_iter().for_each(|y| {
-                let slice = (x, y);
-                let pa = dist(&slice, &a);
-                let pb = dist(&slice, &b);
-                let pc = dist(&slice, &c);
-
-                let pab = area(pa, ab, ab);
-                let pbc = area(pb, bc, pc);
-                let pac = area(pa, ca, pc);
+                let p = (x, y);
+                let pab = area(&p, &a, &b);
+                let pbc = area(&p, &b, &c);
+                let pac = area(&p, &a, &c);
 
                 if pab + pbc + pac == abc {
                     let mut lock = self.lock().unwrap();
-                    lock.set_pixel(x, y, color)
+                    lock.set_pixel(x as u32, y as u32, color)
                 }
             })
         })
@@ -71,7 +64,7 @@ pub struct WindowCPU<C: CanvasCPU + Send> {
     title: String,
     width: u32,
     height: u32,
-    renderer: Option<ProgramCPU<C>>,
+    renderer: Option<Rc<ProgramCPU<C>>>,
 
     front: Arc<Mutex<C>>,
     back: Arc<Mutex<C>>,
@@ -86,7 +79,7 @@ impl<C: CanvasCPU + Send> WindowCPU<C> {
 impl<C: CanvasCPU + Send> Renderer for WindowCPU<C> {
     type ErrorType = String;
     type WindowType = Self;
-    type ProgramType = ProgramCPU<C>;
+    type ProgramType = Rc<ProgramCPU<C>>;
     type MeshType = MeshCPU;
     type TextureType = TextureCPU;
     type KeyboardListenerType = KeyboardCPU;
@@ -96,21 +89,20 @@ impl<C: CanvasCPU + Send> Renderer for WindowCPU<C> {
         unimplemented!()
     }
 
-    fn create_program (&self, vertex: <ProgramCPU<C> as Program>::Vertex, fragment: <ProgramCPU<C> as Program>::Fragment, uniforms: &[&str]) -> Result<Self::ProgramType, Self::ErrorType> {
+    fn create_program (&self, vertex: VertexCPU, fragment: FragmentCPU<C>, uniforms: &[&str]) -> Result<Self::ProgramType, Self::ErrorType> {
         let uniforms = uniforms.iter()
             .map(|x| (x.to_string(), None))
             .collect();
 
-        Ok(ProgramCPU {
+        Ok(Rc::new(ProgramCPU {
             uniforms,
             vertex,
             fragment
-        })
+        }))
     }
 
     fn bind_program (&mut self, program: &Self::ProgramType) {
-        todo!()
-        //self.renderer = Some(program);
+        self.renderer = Some(program.clone());
     }
 
     fn unbind_program (&mut self, program: &Self::ProgramType) {
@@ -132,12 +124,12 @@ impl<C: CanvasCPU + Send> Renderer for WindowCPU<C> {
         todo!()
     }
 
-    fn create_vertex_shader (&self, code: &str) -> Result<<ProgramCPU<C> as Program>::Vertex, Self::ErrorType> {
-        todo!()
+    fn create_vertex_shader (&self, code: &str) -> Result<VertexCPU, Self::ErrorType> {
+        unimplemented!()
     }
 
-    fn create_fragment_shader (&self, code: &str) -> Result<<ProgramCPU<C> as Program>::Fragment, Self::ErrorType> {
-        todo!()
+    fn create_fragment_shader (&self, code: &str) -> Result<FragmentCPU<C>, Self::ErrorType> {
+        unimplemented!()
     }
 
     fn set_wireframe (&mut self, value: bool) {
@@ -194,13 +186,14 @@ impl<C: CanvasCPU + Send> FragmentShader for FragmentCPU<C> {
 }
 
 // PROGRAM
+#[derive(Clone)]
 pub struct ProgramCPU<C: CanvasCPU + Send> {
     uniforms: HashMap<String, Option<Box<dyn UniformValue>>>,
     vertex: VertexCPU,
     fragment: FragmentCPU<C>
 }
 
-impl<C: CanvasCPU + Send> Program for ProgramCPU<C> {
+impl<C: CanvasCPU + Send> Program for Rc<ProgramCPU<C>> {
     type Error = String;
     type Vertex = Box<dyn Fn(EucVecf3) -> EucVecf3>;
     type Fragment = Box<dyn Fn(Material<WindowCPU<C>>) -> Color>;
@@ -227,7 +220,7 @@ impl<C: CanvasCPU + Send> Program for ProgramCPU<C> {
     }
 
     fn set_bool (&mut self, key: &Self::Uniform, value: bool) {
-        self.uniforms.insert(key.clone(), Some(Box::new(value)));
+        Rc::<ProgramCPU<C>>::make_mut(self).uniforms.insert(key.clone(), Some(Box::new(value)));
     }
 
     fn set_int (&mut self, key: &Self::Uniform, value: i32) {

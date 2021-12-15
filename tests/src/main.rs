@@ -1,13 +1,11 @@
+use std::sync::{Arc, Mutex};
+
 use vigilant_lamp::input::{KeyboardListener, KeyboardKey, MouseListener};
 use vigilant_lamp::quaternion::Quaternion32;
 use vigilant_lamp::{Script, Scene, Material, Color};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
 pub fn main () {
-    let mut terminal = Arc::new(Mutex::new(CanvasTerminal::default()));
-    terminal.fill_rectangle((0, 0), (10, 10), Color::BLACK);
-    
-    /*
     let gl = build_opengl("Hello world", 900, 900, false, default_cam());
     
     match gl {
@@ -24,7 +22,7 @@ pub fn main () {
                 Ok(_) => println!("Done")
             }
         }
-    }*/
+    }
 }
 
 fn default_cam () -> PerspectiveCamera {

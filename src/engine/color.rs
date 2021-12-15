@@ -1,109 +1,59 @@
 use std::fmt::Debug;
-
 use crate::{shaders::UniformValue, vector::EucVecf4};
 
-//use crate::shaders::UniformValue;
 /// Representation of a color
-
 #[derive(Clone, Copy)]
-pub struct Color (u32);
+pub struct Color {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8
+}
 
 // CONSTANTS
 impl Color {
-    pub const WHITE : Color = Color(u32::MAX);
-    pub const BLACK : Color = Color(255);
-    pub const TRANSPARENT : Color = Color(0);
+    pub const WHITE : Color = Color { r: 255, g: 255, b: 255, a: 255 };
+    pub const BLACK : Color = Color { r: 0, g: 0, b: 0, a: 255 };
+    pub const TRANSPARENT : Color = Color { r: 0, g: 0, b: 0, a: 0 };
 
-    pub const RED : Color = Color(0xFF0000FF);
-    pub const GREEN : Color = Color(0x00FF00FF);
-    pub const BLUE : Color = Color(0x0000FFFF);
+    pub const RED : Color = Color { r: 255, g: 0, b: 0, a: 255 };
+    pub const GREEN : Color = Color { r: 0, g: 255, b: 0, a: 255 };
+    pub const BLUE : Color = Color { r: 0, g: 0, b: 255, a: 255 };
 
-    pub const PINK : Color = Color(0xFFAFAFFF);
-    pub const ORANGE : Color = Color(0xFFC800FF);
-    pub const YELLOW : Color = Color(0xFFFF00FF);
-    pub const CYAN : Color = Color(0x00FFFFFF);
+    pub const PINK : Color = Color { r: 255, g: 175, b: 175, a: 255 };
+    pub const ORANGE : Color = Color { r: 255, g: 200, b: 0, a: 255 };
+    pub const YELLOW : Color = Color { r: 255, g: 255, b: 0, a: 255 };
+    pub const CYAN : Color = Color { r: 0, g: 255, b: 255, a: 255 };
 }
 
 // INITIALIZERS
 impl Color {
-    pub fn from_rgba (r: u8, g: u8, b: u8, a: u8) -> Color {
-        let alpha = a as u32;
-        let blue = (b as u32) << 8;
-        let green = (g as u32) << 16;
-        let red = (r as u32) << 24;
-
-        Color(red | green | blue | alpha)
+    pub fn new (r: u8, g: u8, b: u8, a: u8) -> Color {
+        Color {r, g, b, a}
     }
 
     pub fn from_rgb (r: u8, g: u8, b: u8) -> Color {
-        let blue = (b as u32) << 8;
-        let green = (g as u32) << 16;
-        let red = (r as u32) << 24;
-
-        Color(red | green | blue | 255)
-    }
-
-    pub fn from_hex (value: &str) -> Option<Color> {
-        let hex : &str;
-
-        if value.chars().next().unwrap() == '#' {
-            hex = &value[1..]
-        } else {
-            hex = value;
-        }
-
-        if hex.len() == 6 {
-            let parse = u32::from_str_radix(hex, 16);
-            match parse {
-                Ok(x) => return Some(Color(x << 8)),
-                Err(_) => return None
-            }
-            
-        } else if hex.len() == 8 {
-            let parse = u32::from_str_radix(hex, 16);
-            match parse {
-                Ok(x) => return Some(Color(x)),
-                Err(_) => return None
-            }
-        }
-
-        None
+        Color::new(r, g, b, 255)
     }
 }
 
 // METHODS
 impl Color {
-    pub fn alpha (&self) -> u8 {
-        (self.0 & 255) as u8
-    }
-
     pub fn alpha_f32 (&self) -> f32 {
-        (self.alpha() as f32) / 255.
+        (self.a as f32) / 255.
     }
 
     // RGB
-    pub fn red (&self) -> u8 {
-        ((self.0 >> 24) & 255) as u8
-    }
-
-    pub fn green (&self) -> u8 {
-        ((self.0 >> 16) & 255) as u8
-    }
-    
-    pub fn blue (&self) -> u8 {
-        ((self.0 >> 8) & 255) as u8
-    }
-
     pub fn red_f32 (&self) -> f32 {
-        (self.red() as f32) / 255.
+        (self.r as f32) / 255.
     }
 
     pub fn green_f32 (&self) -> f32 {
-        (self.green() as f32) / 255.
+        (self.g as f32) / 255.
     }
 
     pub fn blue_f32 (&self) -> f32 {
-        (self.blue() as f32) / 255.
+        (self.b as f32) / 255.
     }
 
     // HSV
@@ -151,17 +101,21 @@ impl Color {
         r.max(g.max(b))
     } 
 
+    pub fn intensity (&self) -> f32 {
+        ((self.r as f32) + (self.g as f32) + (self.b as f32)) / 765.
+    } 
+
     // COMPONENTS
     pub fn rgba_components (&self) -> [u8;4] {
-        [self.red(), self.green(), self.blue(), self.alpha()]
+        [self.r, self.g, self.b, self.a]
     }
 
     pub fn argb_components (&self) -> [u8;4] {
-        [self.alpha(), self.red(), self.green(), self.blue()]
+        [self.a, self.r, self.g, self.b]
     }
 
     pub fn rgb_components (&self) -> [u8;3] {
-        [self.red(), self.green(), self.blue()]
+        [self.r, self.g, self.b]
     }
 
     pub fn rgba_components_f32 (&self) -> [f32;4] {
