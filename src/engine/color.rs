@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use crate::{shaders::UniformValue, vector::EucVecf4};
 
 /// Representation of a color
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -156,14 +156,8 @@ impl Color {
 }
 
 impl UniformValue for Color {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &str) -> bool {
         let vec = EucVecf4::new(self.red_f32(), self.green_f32(), self.blue_f32(), self.alpha_f32());
         vec.set_to_program(program, key)
-    }
-}
-
-impl Debug for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Color").field(&self.rgba_components_f32()).finish()
     }
 }

@@ -22,17 +22,13 @@ impl<R: Renderer> Material<R> {
 }
 
 impl<R: Renderer> UniformValue for Material<R> {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
-        todo!()
-    }
-
-    fn set_to_program_by_name<P: crate::shaders::Program>(&self, program: &mut P, key: &str) -> bool where Self: Sized {
+    fn set_to_program<P: crate::shaders::Program>(&self, program: &mut P, key: &str) -> bool where Self: Sized {
         let color = match &self.color {
             None => true,
             Some(color) => {
                 let mut name = key.to_string();
                 name.push_str(".color");
-                color.set_to_program_by_name(program, name.as_str())
+                color.set_to_program(program, name.as_str())
             }
         };
 
@@ -41,7 +37,7 @@ impl<R: Renderer> UniformValue for Material<R> {
             Some(texture) => {
                 let mut name = key.to_string();
                 name.push_str(".texture");
-                texture.set_to_program_by_name(program, name.as_str())
+                texture.set_to_program(program, name.as_str())
             }
         };
 

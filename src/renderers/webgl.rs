@@ -176,11 +176,11 @@ impl WebGL {
         scene.window.clear();
 
         self.bind_program(&scene.program);
-        scene.camera_matrix().set_to_program_by_name(&mut scene.program, "camera");
+        scene.camera_matrix().set_to_program(&mut scene.program, "camera");
         
         for elem in scene.objects.iter() {
-            elem.transform.matrix().set_to_program_by_name(&mut scene.program, "world_matrix");
-            elem.material.set_to_program_by_name(&mut scene.program, "material");
+            elem.transform.matrix().set_to_program(&mut scene.program, "world_matrix");
+            elem.material.set_to_program(&mut scene.program, "material");
             self.draw_mesh(&elem.mesh)
         }
 
@@ -608,7 +608,7 @@ impl Mesh for MeshWGL {
 // TEXTURE
 // I'M NOT HAPPY WITH THIS. IN THE FUTURE, TYPE SAFETY MUST BE GUARANTEED
 impl UniformValue for WebGlTexture  {
-    fn set_to_program<P: Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &str) -> bool {
         unsafe {
             let program = &mut *(self as *const dyn Any as *mut ProgramWGL);
             let key = &*(self as *const dyn Any as *const UniformWGL);

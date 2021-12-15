@@ -2,7 +2,7 @@ use std::ops::{Add, Sub, Mul, Div};
 use derive_more::{AddAssign, SubAssign, MulAssign, DivAssign, Neg};
 use num::{Float, Num};
 
-use crate::shaders::UniformValue;
+use crate::shaders::{UniformValue, Program};
 
 use super::{EucVec3, EucVec2};
 
@@ -158,15 +158,23 @@ impl<T: Num + Copy> Div<T> for EucVec4<T> {
 
 // OTHER TRAITS
 impl UniformValue for EucVecf4 {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
-        program.set_float_vec4(key, self);
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &str) -> bool {
+        match program.get_uniform(key) {
+            None => return false,
+            Some(x) => program.set_float_vec4(&x.clone(), self)
+        }
+
         true
     }
 }
 
 impl UniformValue for EucVecd4 {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
-        program.set_double_vec4(key, self);
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &str) -> bool {
+        match program.get_uniform(key) {
+            None => return false,
+            Some(x) => program.set_double_vec4(&x.clone(), self)
+        }
+
         true
     }
 }

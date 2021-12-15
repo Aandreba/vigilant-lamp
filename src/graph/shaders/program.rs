@@ -49,14 +49,8 @@ pub trait Program: Sized {
         self.get_uniforms().iter().find(|x| x.get_name() == name).map(|x| x.clone())
     }
 
-    fn set_uniform <T: UniformValue> (&mut self, key: &Self::Uniform, value: &T) -> bool {
+    fn set_uniform <T: UniformValue> (&mut self, key: &str, value: &T) -> bool where Self::Uniform: Clone {
         value.set_to_program(self, key)
-    }
-
-    fn set_uniform_by_name <T: UniformValue> (&mut self, key: &str, value: &T) -> bool where Self::Uniform: Clone {
-        self.get_uniform_clone(key)
-            .map(|x| value.set_to_program(self, &x))
-            .unwrap_or(false)
     }
 }
 

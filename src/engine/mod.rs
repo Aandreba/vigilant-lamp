@@ -6,7 +6,9 @@ mod clock;
 mod script;
 mod material;
 mod color;
+
 pub mod input;
+pub mod light;
 
 pub use camera::{Camera, PerspectiveCamera};
 pub use objectg::ObjectG;

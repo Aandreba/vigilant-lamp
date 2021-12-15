@@ -6,8 +6,14 @@ struct Material {
   sampler2D texture;
 };
 
+struct Light {
+  vec4 color;
+  float intensity;
+};
+
 uniform Material material;
+uniform Light ambient;
 
 void main() {
-  final_color = material.color;
+  final_color = material.color + (ambient.color * ambient.intensity);
 }

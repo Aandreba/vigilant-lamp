@@ -73,10 +73,15 @@ impl Renderer for OpenGL {
                                 None => ()
                             }
                             
-                            scene.camera_matrix().set_to_program_by_name(&mut scene.program, "camera");
+                            scene.camera_matrix().set_to_program(&mut scene.program, "camera");
+                            match &scene.ambient {
+                                Some(x) => x.set_to_program(&mut scene.program, "ambient"),
+                                None => false,
+                            };
+
                             for elem in scene.objects.iter() {
-                                elem.transform.matrix().set_to_program_by_name(&mut scene.program, "world_matrix");
-                                elem.material.set_to_program_by_name(&mut scene.program, "material");
+                                elem.transform.matrix().set_to_program(&mut scene.program, "world_matrix");
+                                elem.material.set_to_program(&mut scene.program, "material");
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
 
@@ -529,8 +534,8 @@ pub struct TextureGL(u32);
 impl Texture for TextureGL {}
 
 impl UniformValue for TextureGL {
-    fn set_to_program<P: Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
-        program.set_uint(key, self.0);
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &str) -> bool {
+        program.set_uniform(key, self);
         true
     }
 }

@@ -1,13 +1,14 @@
 use std::sync::{Arc, Mutex};
 
 use vigilant_lamp::input::{KeyboardListener, KeyboardKey, MouseListener};
+use vigilant_lamp::light::AmbientLight;
 use vigilant_lamp::quaternion::Quaternion32;
 use vigilant_lamp::{Script, Scene, Material, Color};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
 pub fn main () {
     let gl = build_opengl("Hello world", 900, 900, false, default_cam());
-    
+
     match gl {
         Err(x) => panic!("Error: {}", x),
         Ok((renderer, mut scene)) => {
@@ -30,7 +31,9 @@ fn default_cam () -> PerspectiveCamera {
 }
 
 fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(), R::ErrorType> {
+    scene.ambient = Some(AmbientLight::new(Color::WHITE, 0.1));
     let mesh = MeshPrimitives::cube(renderer);
+
     match mesh {
         Err(x) => Err(x),
         Ok(mesh) => {
