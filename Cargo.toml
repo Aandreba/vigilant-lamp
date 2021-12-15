@@ -23,6 +23,7 @@ js-sys = "0.3.55"
 yew = "0.19.3"
 game-loop = "0.8.0"
 derive_more = "0.99.17"
+rayon = "1.5.1"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 gl33 = "0.2.1"

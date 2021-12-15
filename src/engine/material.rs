@@ -22,11 +22,11 @@ impl<R: Renderer> Material<R> {
 }
 
 impl<R: Renderer> UniformValue for Material<R> {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         todo!()
     }
 
-    fn set_to_program_by_name<P: crate::shaders::Program>(&self, program: &P, key: &str) -> bool where Self: Sized {
+    fn set_to_program_by_name<P: crate::shaders::Program>(&self, program: &mut P, key: &str) -> bool where Self: Sized {
         let color = match &self.color {
             None => true,
             Some(color) => {
@@ -49,4 +49,4 @@ impl<R: Renderer> UniformValue for Material<R> {
     }
 }
 
-pub trait Texture: UniformValue {} 
+pub trait Texture: UniformValue + Clone {} 

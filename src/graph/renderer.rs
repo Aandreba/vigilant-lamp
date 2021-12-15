@@ -1,9 +1,9 @@
-use std::{fs::File, io::Read, fmt::Debug};
+use std::{fs::File, io::Read};
 use crate::{engine::{input::{KeyboardListener, MouseListener}}, Scene, Texture, ErrorType, ResultFlatMap};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
 // RENDERER
-pub trait Renderer: Debug + Sized {
+pub trait Renderer: Sized {
    type ErrorType;
    type WindowType: Window;
    type ProgramType: Program<Error = Self::ErrorType>;
@@ -16,8 +16,8 @@ pub trait Renderer: Debug + Sized {
    fn create_window (&self, title: &str, width: u32, height: u32, vsync: bool) -> Result<Self::WindowType, Self::ErrorType>;
    fn create_program (&self, vertex: <Self::ProgramType as Program>::Vertex, fragment: <Self::ProgramType as Program>::Fragment, uniforms: &[&str]) -> Result<Self::ProgramType, Self::ErrorType>;
    
-   fn bind_program (&self, program: &Self::ProgramType);
-   fn unbind_program (&self, program: &Self::ProgramType);
+   fn bind_program (&mut self, program: &Self::ProgramType);
+   fn unbind_program (&mut self, program: &Self::ProgramType);
 
    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<Self::MeshType, Self::ErrorType>;
    fn draw_mesh (&self, mesh: &Self::MeshType);

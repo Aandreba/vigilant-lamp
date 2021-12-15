@@ -47,7 +47,7 @@ struct SharedData {
     context: WebGl2RenderingContext
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WebGL {
     data: Rc<SharedData>,
     wireframe: bool
@@ -171,16 +171,16 @@ impl WebGL {
         }
     }
 
-    fn render (&self, scene: &mut Scene<WebGL>) {
+    fn render (&mut self, scene: &mut Scene<WebGL>) {
         scene.window.update();
         scene.window.clear();
 
         self.bind_program(&scene.program);
-        scene.program.set_float_mat4_by_name("camera", &scene.camera_matrix());
+        scene.camera_matrix().set_to_program_by_name(&mut scene.program, "camera");
         
         for elem in scene.objects.iter() {
-            scene.program.set_float_mat4_by_name("world_matrix", &elem.transform.matrix());
-            elem.material.set_to_program_by_name(&scene.program, "material");
+            elem.transform.matrix().set_to_program_by_name(&mut scene.program, "world_matrix");
+            elem.material.set_to_program_by_name(&mut scene.program, "material");
             self.draw_mesh(&elem.mesh)
         }
 
@@ -233,11 +233,11 @@ impl Renderer for WebGL {
         }
     }
 
-    fn bind_program (&self, program: &Self::ProgramType) {
+    fn bind_program (&mut self, program: &Self::ProgramType) {
         self.data.context.use_program(Some(&program.program))
     }
 
-    fn unbind_program (&self, program: &ProgramWGL) {
+    fn unbind_program (&mut self, program: &ProgramWGL) {
         self.data.context.use_program(None)
     }
 
@@ -391,7 +391,7 @@ impl Window for WindowWGL {
         (self.canvas.width(), self.canvas.height())
     }
 
-    fn clear (&self) {
+    fn clear (&mut self) {
         self.data.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT)
     } 
 
@@ -425,7 +425,7 @@ impl Window for WindowWGL {
 }
 
 // UNFIFORM
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UniformWGL {
     id: Option<WebGlUniformLocation>,
     name: String
@@ -484,92 +484,92 @@ impl Program for ProgramWGL {
         self.uniforms.as_slice()
     }
 
-    fn set_bool (&self, key: &UniformWGL, value: bool) {
+    fn set_bool (&mut self, key: &UniformWGL, value: bool) {
         self.set_int(key, if value { 1 } else { 0 })
     }
 
-    fn set_int (&self, key: &UniformWGL, value: i32) {
+    fn set_int (&mut self, key: &UniformWGL, value: i32) {
         self.data.context.uniform1i(key.id.as_ref(), value)
     }
 
-    fn set_uint (&self, key: &UniformWGL, value: u32) {
+    fn set_uint (&mut self, key: &UniformWGL, value: u32) {
         self.data.context.uniform1ui(key.id.as_ref(), value)
     }
 
-    fn set_float (&self, key: &UniformWGL, value: f32) {
+    fn set_float (&mut self, key: &UniformWGL, value: f32) {
         self.data.context.uniform1f(key.id.as_ref(), value)
     }
 
-    fn set_double (&self, key: &UniformWGL, value: f64) {
+    fn set_double (&mut self, key: &UniformWGL, value: f64) {
         unimplemented!()
     }
 
-    fn set_bools (&self, key: &UniformWGL, value: &[bool]) {
+    fn set_bools (&mut self, key: &UniformWGL, value: &[bool]) {
         let map : Vec<i32> = value.iter().map(|x| if *x { 1 } else { 0 }).collect();
         self.set_ints(key, map.as_ref())
     }
 
-    fn set_ints (&self, key: &UniformWGL, value: &[i32]) {
+    fn set_ints (&mut self, key: &UniformWGL, value: &[i32]) {
         self.data.context.uniform1iv_with_i32_array(key.id.as_ref(), value)
     }
 
-    fn set_uints (&self, key: &UniformWGL, value: &[u32]) {
+    fn set_uints (&mut self, key: &UniformWGL, value: &[u32]) {
         self.data.context.uniform1uiv_with_u32_array(key.id.as_ref(), value)
     }
 
-    fn set_floats (&self, key: &UniformWGL, value: &[f32]) {
+    fn set_floats (&mut self, key: &UniformWGL, value: &[f32]) {
         self.data.context.uniform1fv_with_f32_array(key.id.as_ref(), value)
     }
 
-    fn set_doubles (&self, key: &UniformWGL, value: &[f64]) {
+    fn set_doubles (&mut self, key: &UniformWGL, value: &[f64]) {
         unimplemented!()
     }
 
-    fn set_float_vec2 (&self, key: &Self::Uniform, value: &EucVecf2) {
+    fn set_float_vec2 (&mut self, key: &Self::Uniform, value: &EucVecf2) {
         self.data.context.uniform2f(key.id.as_ref(), value.x, value.y)
     }
 
-    fn set_float_vec3 (&self, key: &Self::Uniform, value: &EucVecf3) {
+    fn set_float_vec3 (&mut self, key: &Self::Uniform, value: &EucVecf3) {
         self.data.context.uniform3f(key.id.as_ref(), value.x, value.y, value.z)
     }
 
-    fn set_float_vec4 (&self, key: &Self::Uniform, value: &EucVecf4) {
+    fn set_float_vec4 (&mut self, key: &Self::Uniform, value: &EucVecf4) {
         self.data.context.uniform4f(key.id.as_ref(), value.x, value.y, value.z, value.w)
     }
 
-    fn set_double_vec2 (&self, key: &Self::Uniform, value: &EucVecd2) {
+    fn set_double_vec2 (&mut self, key: &Self::Uniform, value: &EucVecd2) {
         unimplemented!()
     }
 
-    fn set_double_vec3 (&self, key: &Self::Uniform, value: &EucVecd3) {
+    fn set_double_vec3 (&mut self, key: &Self::Uniform, value: &EucVecd3) {
         unimplemented!()
     }
 
-    fn set_double_vec4 (&self, key: &Self::Uniform, value: &EucVecd4) {
+    fn set_double_vec4 (&mut self, key: &Self::Uniform, value: &EucVecd4) {
         unimplemented!()
     }
 
-    fn set_float_mat2 (&self, key: &Self::Uniform, value: &Matf2) {
+    fn set_float_mat2 (&mut self, key: &Self::Uniform, value: &Matf2) {
         self.data.context.uniform_matrix2fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_float_mat3 (&self, key: &Self::Uniform, value: &Matf3) {
+    fn set_float_mat3 (&mut self, key: &Self::Uniform, value: &Matf3) {
         self.data.context.uniform_matrix3fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_float_mat4 (&self, key: &Self::Uniform, value: &Matf4) {
+    fn set_float_mat4 (&mut self, key: &Self::Uniform, value: &Matf4) {
         self.data.context.uniform_matrix4fv_with_f32_array(key.id.as_ref(), true, value.flat().as_ref())
     }
 
-    fn set_double_mat2 (&self, key: &Self::Uniform, value: &Matd2) {
+    fn set_double_mat2 (&mut self, key: &Self::Uniform, value: &Matd2) {
         unimplemented!()
     }
 
-    fn set_double_mat3 (&self, key: &Self::Uniform, value: &Matd3) {
+    fn set_double_mat3 (&mut self, key: &Self::Uniform, value: &Matd3) {
         unimplemented!()
     }
 
-    fn set_double_mat4 (&self, key: &Self::Uniform, value: &Matd4) {
+    fn set_double_mat4 (&mut self, key: &Self::Uniform, value: &Matd4) {
         unimplemented!()
     }
 }
@@ -608,9 +608,9 @@ impl Mesh for MeshWGL {
 // TEXTURE
 // I'M NOT HAPPY WITH THIS. IN THE FUTURE, TYPE SAFETY MUST BE GUARANTEED
 impl UniformValue for WebGlTexture  {
-    fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         unsafe {
-            let program = &*(self as *const dyn Any as *const ProgramWGL);
+            let program = &mut *(self as *const dyn Any as *mut ProgramWGL);
             let key = &*(self as *const dyn Any as *const UniformWGL);
 
             program.data.context.active_texture(WebGl2RenderingContext::TEXTURE0);

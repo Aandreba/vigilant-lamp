@@ -13,7 +13,7 @@ pub trait Window {
         return (size.0 as f32) / (size.1 as f32);
     }
 
-    fn clear (&self);
+    fn clear (&mut self);
     fn update (&mut self);
 
     /// Method that allows to retrieve preperties that are renderer specific, such as scroll position

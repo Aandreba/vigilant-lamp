@@ -153,14 +153,14 @@ impl<T: Num + Copy> Div<T> for EucVec3<T> {
 
 // OTHER TRAITS
 impl UniformValue for EucVecf3 {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         program.set_float_vec3(key, self);
         true
     }
 }
 
 impl UniformValue for EucVecd3 {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         program.set_double_vec3(key, self);
         true
     }

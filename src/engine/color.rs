@@ -5,7 +5,7 @@ use crate::{shaders::UniformValue, vector::EucVecf4};
 //use crate::shaders::UniformValue;
 /// Representation of a color
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Color (u32);
 
 // CONSTANTS
@@ -202,7 +202,7 @@ impl Color {
 }
 
 impl UniformValue for Color {
-    fn set_to_program<P: crate::shaders::Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: crate::shaders::Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         let vec = EucVecf4::new(self.red_f32(), self.green_f32(), self.blue_f32(), self.alpha_f32());
         vec.set_to_program(program, key)
     }

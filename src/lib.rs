@@ -1,4 +1,4 @@
-#![feature(concat_idents)]
+#![feature(async_stream, int_abs_diff, poll_ready, generic_associated_types)]
 
 macro_rules! export {
     ($name:ident) => {

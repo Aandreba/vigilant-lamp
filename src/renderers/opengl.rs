@@ -25,7 +25,7 @@ impl Renderer for OpenGL {
     type KeyboardListenerType = KeyboardListenerGL; 
     type MouseListenerType = MouseListenerGL;
 
-    fn run (self, mut scene: Scene<OpenGL>) -> Result<(), Self::ErrorType> {
+    fn run (mut self, mut scene: Scene<OpenGL>) -> Result<(), Self::ErrorType> {
         let scene_init = scene.init();
 
         match scene_init {
@@ -72,11 +72,11 @@ impl Renderer for OpenGL {
                                 Some(x) => x(&mut scene, &keyboard, &mouse, &delta),
                                 None => ()
                             }
-        
-                            scene.program.set_float_mat4_by_name("camera", &scene.camera_matrix());
+                            
+                            scene.camera_matrix().set_to_program_by_name(&mut scene.program, "camera");
+
                             for elem in scene.objects.iter() {
-                                println!("{}", elem.material.set_to_program_by_name(&scene.program, "material"));
-                                scene.program.set_float_mat4_by_name("world_matrix", &elem.transform.matrix());
+                                elem.transform.matrix().set_to_program_by_name(&mut scene.program, "world_matrix");
                                 unsafe { OpenGL::draw_mesh_static(&elem.mesh) }
                             }
 
@@ -227,11 +227,11 @@ impl Renderer for OpenGL {
         }
     }
 
-    fn bind_program (&self, program: &ProgramGL) {
+    fn bind_program (&mut self, program: &ProgramGL) {
         glUseProgram(program.id)
     }
 
-    fn unbind_program (&self, program: &ProgramGL) {
+    fn unbind_program (&mut self, program: &ProgramGL) {
         glUseProgram(0)
     }
 }
@@ -335,122 +335,122 @@ impl Program for ProgramGL {
         self.uniforms.as_ref()
     }
 
-    fn set_bool (&self, key: &Self::Uniform, value: bool) {
+    fn set_bool (&mut self, key: &Self::Uniform, value: bool) {
         self.set_int(key, if value { 1 } else { 0 })
     }
 
-    fn set_bools (&self, key: &Self::Uniform, value: &[bool]) {
+    fn set_bools (&mut self, key: &Self::Uniform, value: &[bool]) {
         let map : Vec<i32> = value.iter().map(|x| if *x { 1 } else { 0 }).collect();
         self.set_ints(key, map.as_ref())
     }
 
-    fn set_int(&self, key: &Self::Uniform, value: i32) {
+    fn set_int(&mut self, key: &Self::Uniform, value: i32) {
         unsafe {
             glUniform1i(key.id, value) 
         }
     }
 
-    fn set_ints (&self, key: &Self::Uniform, value: &[i32]) {
+    fn set_ints (&mut self, key: &Self::Uniform, value: &[i32]) {
         unsafe {
             glUniform1iv(key.id, value.len() as i32, value.as_ptr())
         }
     }
 
-    fn set_uint (&self, key: &Self::Uniform, value: u32) {
+    fn set_uint (&mut self, key: &Self::Uniform, value: u32) {
         unsafe {
             glUniform1ui(key.id, value)
         }
     }
 
-    fn set_uints (&self, key: &Self::Uniform, value: &[u32]) {
+    fn set_uints (&mut self, key: &Self::Uniform, value: &[u32]) {
         unsafe {
             glUniform1uiv(key.id, value.len() as i32, value.as_ptr())
         }
     }
 
-    fn set_float(&self, key: &Self::Uniform, value: f32) {
+    fn set_float(&mut self, key: &Self::Uniform, value: f32) {
         unsafe {
             glUniform1f(key.id, value)
         }
     }
 
-    fn set_floats (&self, key: &Self::Uniform, value: &[f32]) {
+    fn set_floats (&mut self, key: &Self::Uniform, value: &[f32]) {
         unsafe {
             glUniform1fv(key.id, value.len() as i32, value.as_ptr())
         }   
     }
 
-    fn set_float_vec2 (&self, key: &Self::Uniform, value: &EucVecf2) {
+    fn set_float_vec2 (&mut self, key: &Self::Uniform, value: &EucVecf2) {
         unsafe {
             glUniform2f(key.id, value.x, value.y)
         }
     }
 
-    fn set_float_vec3 (&self, key: &Self::Uniform, value: &EucVecf3) {
+    fn set_float_vec3 (&mut self, key: &Self::Uniform, value: &EucVecf3) {
         unsafe {
             glUniform3f(key.id, value.x, value.y, value.z)
         }
     }
 
-    fn set_float_vec4 (&self, key: &Self::Uniform, value: &EucVecf4) {
+    fn set_float_vec4 (&mut self, key: &Self::Uniform, value: &EucVecf4) {
         unsafe {
             glUniform4f(key.id, value.x, value.y, value.z, value.w)
         }
     }
 
-    fn set_float_mat2(&self, key: &Self::Uniform, value: &Matf2) {
+    fn set_float_mat2(&mut self, key: &Self::Uniform, value: &Matf2) {
         unsafe {
             glUniformMatrix2fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat3(&self, key: &Self::Uniform, value: &Matf3) {
+    fn set_float_mat3(&mut self, key: &Self::Uniform, value: &Matf3) {
         unsafe {
             glUniformMatrix3fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_float_mat4(&self, key: &Self::Uniform, value: &Matf4) {
+    fn set_float_mat4(&mut self, key: &Self::Uniform, value: &Matf4) {
         unsafe {
             glUniformMatrix4fv(key.id, 1, 1, value.flat().as_ptr())
         }
     }
 
-    fn set_double(&self, key: &Self::Uniform, value: f64) {
+    fn set_double(&mut self, key: &Self::Uniform, value: f64) {
         unimplemented!()
     }
 
-    fn set_doubles (&self, key: &Self::Uniform, value: &[f64]) {
+    fn set_doubles (&mut self, key: &Self::Uniform, value: &[f64]) {
         unimplemented!() 
     }
 
-    fn set_double_vec2 (&self, key: &Self::Uniform, value: &EucVecd2) {
+    fn set_double_vec2 (&mut self, key: &Self::Uniform, value: &EucVecd2) {
         unimplemented!()
     }
 
-    fn set_double_vec3 (&self, key: &Self::Uniform, value: &EucVecd3) {
+    fn set_double_vec3 (&mut self, key: &Self::Uniform, value: &EucVecd3) {
         unimplemented!()
     }
 
-    fn set_double_vec4 (&self, key: &Self::Uniform, value: &EucVecd4) {
+    fn set_double_vec4 (&mut self, key: &Self::Uniform, value: &EucVecd4) {
         unimplemented!()
     }
 
-    fn set_double_mat2(&self, key: &Self::Uniform, value: &Matd2) {
+    fn set_double_mat2(&mut self, key: &Self::Uniform, value: &Matd2) {
         unimplemented!()
     }
 
-    fn set_double_mat3(&self, key: &Self::Uniform, value: &Matd3) {
+    fn set_double_mat3(&mut self, key: &Self::Uniform, value: &Matd3) {
         unimplemented!()
     }
 
-    fn set_double_mat4(&self, key: &Self::Uniform, value: &Matd4) {
+    fn set_double_mat4(&mut self, key: &Self::Uniform, value: &Matd4) {
         unimplemented!()
     }
 }
 
 // UNIFORMS
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UniformGL {
     name: String,
     id: i32
@@ -512,7 +512,7 @@ impl Window for WinitWindow {
         self.context.swap_buffers().expect("Unexpected error swaping buffers")
     }
 
-    fn clear (&self) {
+    fn clear (&mut self) {
         unsafe {
             glClear(gl33::GL_COLOR_BUFFER_BIT)
         }
@@ -524,12 +524,12 @@ impl Window for WinitWindow {
 }
 
 // TEXTURE
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TextureGL(u32);
 impl Texture for TextureGL {}
 
 impl UniformValue for TextureGL {
-    fn set_to_program<P: Program> (&self, program: &P, key: &P::Uniform) -> bool {
+    fn set_to_program<P: Program> (&self, program: &mut P, key: &P::Uniform) -> bool {
         program.set_uint(key, self.0);
         true
     }
