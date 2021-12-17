@@ -1,4 +1,6 @@
 use std::{f32::consts::PI};
+use crate::vector::EucVecf3;
+
 use super::renderer::Renderer;
 
 pub const SQUARE_VERTICES : [[f32;3];4] = [
@@ -48,8 +50,32 @@ pub const CUBE_INDICES : [[u32;3];12] = [
 ];
 
 pub trait Mesh {
+    fn get_vertices<'a> () -> &'a [EucVecf3];
+    fn get_indices<'a> () -> &'a [[u32;3]];
+    fn get_normals<'a> () -> &'a [EucVecf3];
+
     fn get_vertex_count (&self) -> usize;
     fn get_index_count (&self) -> usize;
+
+    fn calculate_normals <const N: usize> (vertices: &[EucVecf3;N], indices: &[[u32;3]]) -> [EucVecf3;N] {
+        let mut normals = [EucVecf3::default(); N];
+
+        for index in indices {
+            let idx0 = index[0] as usize;
+            let idx1 = index[1] as usize;
+            let idx2 = index[2] as usize;
+
+            let alpha = vertices[idx1] - vertices[idx0];
+            let beta = vertices[idx2] - vertices[idx0];
+            let cross = alpha.cross(beta);
+
+            normals[idx0] = normals[idx0] + cross;
+            normals[idx1] = normals[idx1] + cross;
+            normals[idx2] = normals[idx2] + cross;
+        }
+
+        normals.map(|x| x.unit())
+    }
 }
 
 type ComputedMesh<R> = Result<<R as Renderer>::MeshType, <R as Renderer>::ErrorType>;
