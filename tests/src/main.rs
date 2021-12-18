@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use vigilant_lamp::input::{KeyboardListener, KeyboardKey, MouseListener};
 use vigilant_lamp::light::AmbientLight;
 use vigilant_lamp::quaternion::Quaternion32;
-use vigilant_lamp::{Script, Scene, Material, Color};
+use vigilant_lamp::{Script, Scene, Material, Color, Mesh};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
 pub fn main () {
@@ -37,6 +37,7 @@ fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(),
     match mesh {
         Err(x) => Err(x),
         Ok(mesh) => {
+            mesh.get_vertices();
             let material = Material::of_color(Color::YELLOW);
             let mut obj = ObjectG::of_mesh(mesh, material);
 

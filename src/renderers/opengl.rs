@@ -1,7 +1,7 @@
-use std::{str::FromStr};
-use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE};
+use std::{str::FromStr, mem::size_of, ffi::c_void, ptr::addr_of};
+use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f, glGetVertexAttribfv, glGetVertexAttribPointerv, glGetFloatv, glGetBufferSubData}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE, GL_CURRENT_VERTEX_ATTRIB, GL_VERTEX_ATTRIB_ARRAY_SIZE, GL_VERTEX_ATTRIB_ARRAY_POINTER};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
-use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::{EucVecf2, EucVecd2, EucVecd3, EucVecd4, EucVecf3, EucVecf4}, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}};
+use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::{EucVecf2, EucVecd2, EucVecd3, EucVecd4, EucVecf3, EucVecf4}, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}, alloc::{malloc, malloc_ptr, malloc_mut_ptr, malloc_mut_slice, malloc_array}};
 
 // RENDERER
 #[derive(Debug)]
@@ -186,7 +186,7 @@ impl Renderer for OpenGL {
         Ok(ProgramGL { id, vertex, fragment, uniforms: uniform_cast })
     }
 
-    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<MeshGL, String> {
+    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]], normals: &[[f32;3]]) -> Result<MeshGL, String> {
         let mut vao = 0;
         unsafe { glGenVertexArrays(1, &mut vao); }
 
@@ -196,16 +196,22 @@ impl Renderer for OpenGL {
 
         glBindVertexArray(vao);
         let vbo: u32;
+        let nbo: u32;
         let idx: u32;
 
         unsafe { 
             vbo = self.buffer_data( GL_ARRAY_BUFFER, bytemuck::cast_slice(vertices)); 
             glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0 as *const _);
             glEnableVertexAttribArray(0);
+            
+            nbo = self.buffer_data( GL_ARRAY_BUFFER, bytemuck::cast_slice(normals)); 
+            glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, 0 as *const _);
+            glEnableVertexAttribArray(1);
+
             idx = self.buffer_data( GL_ELEMENT_ARRAY_BUFFER, bytemuck::cast_slice(indices));
         }
 
-        Ok(MeshGL { id: vao, vertices: vbo, indices: idx, vertex_count: vertices.len(), index_count: indices.len() })
+        Ok(MeshGL { id: vao, vertices: vbo, normals: nbo, indices: idx, vertex_count: vertices.len(), index_count: indices.len() })
     }
 
     fn draw_mesh (&self, mesh: &MeshGL) {
@@ -284,6 +290,14 @@ impl OpenGL {
         }
         
         return Ok(id);
+    }
+
+    pub unsafe fn read_buffer<'a, T> (idx: u32, len: usize) -> &'a [T] {
+        let ptr = malloc_array::<EucVecf3>(len);
+        glBindBuffer(GL_ARRAY_BUFFER, idx);
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, (size_of::<T>() * len) as isize, ptr as *mut c_void);
+        
+        std::slice::from_raw_parts(ptr as *const T, len)
     }
 }
 
@@ -473,12 +487,31 @@ pub struct MeshGL {
     id: u32,
     vertices: u32,
     indices: u32,
+    normals: u32,
 
     vertex_count: usize,
     index_count: usize,
 }
 
 impl Mesh for MeshGL {
+    fn get_vertices<'a> (&'a self) -> &'a [EucVecf3] {
+        unsafe { 
+            OpenGL::read_buffer(self.vertices, self.vertex_count)
+        }
+    }
+
+    fn get_indices<'a> (&'a self) -> &'a [[u32;3]] {
+        unsafe { 
+            OpenGL::read_buffer(self.indices, self.index_count)
+        }
+    }
+
+    fn get_normals<'a> (&'a self) -> &'a [EucVecf3] {
+        unsafe { 
+            OpenGL::read_buffer(self.normals, self.vertex_count)
+        }
+    }
+
     fn get_vertex_count(&self) -> usize {
         self.vertex_count
     }

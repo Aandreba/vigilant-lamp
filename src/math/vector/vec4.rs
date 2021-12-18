@@ -6,7 +6,7 @@ use crate::shaders::{UniformValue, Program};
 
 use super::{EucVec3, EucVec2};
 
-#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone)]
+#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct EucVec4<T: Num + Copy> {
     pub x: T,
     pub y: T,

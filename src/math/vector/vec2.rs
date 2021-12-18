@@ -4,7 +4,7 @@ use num::{Float, Num};
 
 use crate::shaders::{UniformValue, Program};
 
-#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone)]
+#[derive(Neg, AddAssign, SubAssign, MulAssign, DivAssign, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct EucVec2<T: Num + Copy> {
     pub x: T,
     pub y: T

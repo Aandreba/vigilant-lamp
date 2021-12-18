@@ -1,4 +1,7 @@
-#![feature(async_stream, int_abs_diff, poll_ready, generic_associated_types)]
+#![feature(
+    async_stream, int_abs_diff, poll_ready, generic_associated_types,
+    core_intrinsics
+)]
 
 macro_rules! export {
     ($name:ident) => {

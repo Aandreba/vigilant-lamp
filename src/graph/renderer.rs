@@ -1,5 +1,5 @@
 use std::{fs::File, io::Read};
-use crate::{engine::{input::{KeyboardListener, MouseListener}}, Scene, Texture, ErrorType, ResultFlatMap};
+use crate::{engine::{input::{KeyboardListener, MouseListener}}, Scene, Texture, ErrorType, ResultFlatMap, alloc::{cast_unchecked}, MeshPrimitives};
 use super::{mesh::Mesh, shaders::{Program}, window::Window};
 
 // RENDERER
@@ -19,8 +19,13 @@ pub trait Renderer: Sized {
    fn bind_program (&mut self, program: &Self::ProgramType);
    fn unbind_program (&mut self, program: &Self::ProgramType);
 
-   fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<Self::MeshType, Self::ErrorType>;
+   fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]], normals: &[[f32;3]]) -> Result<Self::MeshType, Self::ErrorType>;
    fn draw_mesh (&self, mesh: &Self::MeshType);
+
+   fn create_mesh_wo_normals (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<Self::MeshType, Self::ErrorType> {
+      let normals = MeshPrimitives::calculate_normals(vertices, indices);
+      self.create_mesh(vertices, indices, normals)
+   }
 
    fn create_texture (&self, size: (u32, u32), bytes: Vec<u8>) -> Result<Self::TextureType, Self::ErrorType>;
    fn create_texture_from_read<R: Read> (&self, size: (u32, u32), mut image: R) -> Result<Self::TextureType, ErrorType<std::io::Error, Self::ErrorType>> {

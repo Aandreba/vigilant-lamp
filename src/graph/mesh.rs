@@ -1,5 +1,5 @@
 use std::{f32::consts::PI};
-use crate::vector::EucVecf3;
+use crate::{vector::EucVecf3, alloc::{malloc_slice, map_slice, cast_unchecked, malloc_mut_slice}};
 
 use super::renderer::Renderer;
 
@@ -50,32 +50,12 @@ pub const CUBE_INDICES : [[u32;3];12] = [
 ];
 
 pub trait Mesh {
-    fn get_vertices<'a> () -> &'a [EucVecf3];
-    fn get_indices<'a> () -> &'a [[u32;3]];
-    fn get_normals<'a> () -> &'a [EucVecf3];
+    fn get_vertices<'a> (&'a self) -> &'a [EucVecf3];
+    fn get_indices<'a> (&'a self) -> &'a [[u32;3]];
+    fn get_normals<'a> (&'a self) -> &'a [EucVecf3];
 
     fn get_vertex_count (&self) -> usize;
     fn get_index_count (&self) -> usize;
-
-    fn calculate_normals <const N: usize> (vertices: &[EucVecf3;N], indices: &[[u32;3]]) -> [EucVecf3;N] {
-        let mut normals = [EucVecf3::default(); N];
-
-        for index in indices {
-            let idx0 = index[0] as usize;
-            let idx1 = index[1] as usize;
-            let idx2 = index[2] as usize;
-
-            let alpha = vertices[idx1] - vertices[idx0];
-            let beta = vertices[idx2] - vertices[idx0];
-            let cross = alpha.cross(beta);
-
-            normals[idx0] = normals[idx0] + cross;
-            normals[idx1] = normals[idx1] + cross;
-            normals[idx2] = normals[idx2] + cross;
-        }
-
-        normals.map(|x| x.unit())
-    }
 }
 
 type ComputedMesh<R> = Result<<R as Renderer>::MeshType, <R as Renderer>::ErrorType>;
@@ -83,12 +63,38 @@ type ComputedMesh<R> = Result<<R as Renderer>::MeshType, <R as Renderer>::ErrorT
 pub struct MeshPrimitives ();
 
 impl MeshPrimitives {
+    pub fn calculate_normals<'a> (vertices: &'a [[f32;3]], indices: &'a [[u32;3]]) -> &'a [[f32;3]] {
+        let vertices_cast;
+        let normals;
+
+        unsafe {
+            vertices_cast = cast_unchecked::<&[[f32;3]], &[EucVecf3]>(vertices);
+            normals = malloc_mut_slice::<EucVecf3>(vertices.len());
+        }
+
+        for index in indices {
+            let idx0 = index[0] as usize;
+            let idx1 = index[1] as usize;
+            let idx2 = index[2] as usize;
+
+            let alpha = vertices_cast[idx1] - vertices_cast[idx0];
+            let beta = vertices_cast[idx2] - vertices_cast[idx0];
+            let cross = alpha.cross(beta);
+
+            normals[idx0] = normals[idx0] + cross;
+            normals[idx1] = normals[idx1] + cross;
+            normals[idx2] = normals[idx2] + cross;
+        }
+
+        map_slice(normals, |x| unsafe { cast_unchecked(x.unit()) })
+    }
+
     pub fn square<R: Renderer> (renderer: &R) -> ComputedMesh<R> {
-        renderer.create_mesh(&SQUARE_VERTICES, &SQUARE_INDICES)
+        renderer.create_mesh_wo_normals(&SQUARE_VERTICES, &SQUARE_INDICES)
     }
 
     pub fn cube <R: Renderer> (renderer: &R) -> ComputedMesh<R> {
-        renderer.create_mesh(&CUBE_VERTICES, &CUBE_INDICES)
+        renderer.create_mesh_wo_normals(&CUBE_VERTICES, &CUBE_INDICES)
     }
 
     pub fn circle<R: Renderer, const S: usize> (renderer: &R) -> ComputedMesh<R> {
@@ -106,6 +112,6 @@ impl MeshPrimitives {
             i += 1;
         }
 
-        renderer.create_mesh(&vertices, &indices)
+        renderer.create_mesh_wo_normals(&vertices, &indices)
     }
 }

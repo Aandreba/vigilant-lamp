@@ -4,7 +4,7 @@ use num::Num;
 use crate::vector::{EucVec4};
 
 // MAT2
-#[derive(Neg, Add, Sub, AddAssign, SubAssign, Debug, PartialEq, Eq, Clone)]
+#[derive(Neg, Add, Sub, AddAssign, SubAssign, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Mat4<T: Num + Copy> {
     pub x: EucVec4<T>,
     pub y: EucVec4<T>,

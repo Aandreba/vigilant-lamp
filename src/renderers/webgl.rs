@@ -596,6 +596,18 @@ pub struct MeshWGL {
 }
 
 impl Mesh for MeshWGL {
+    fn get_vertices<'a> (&'a self) -> &'a [EucVecf3] {
+        todo!()
+    }
+
+    fn get_indices<'a> (&'a self) -> &'a [[u32;3]] {
+        todo!()
+    }
+
+    fn get_normals<'a> (&'a self) -> &'a [EucVecf3] {
+        todo!()
+    }
+    
     fn get_vertex_count (&self) -> usize {
         self.vertex_count
     }
