@@ -4,7 +4,7 @@ use vigilant_lamp::webgl::{WindowWGL, MeshWGL};
 use wasm_bindgen::prelude::*;
 use vigilant_lamp::extra::wasm_mappings::*;
 use vigilant_lamp::renderers::webgl::WebGL;
-use vigilant_lamp::{builder::build_webgl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
+use vigilant_lamp::{builder::build_webgl, PerspectiveCamera, MeshPrimitives, Mesh, ObjectG, Renderer};
 use web_sys::console::*;
 
 #[cfg(target_family = "wasm")]
@@ -25,6 +25,8 @@ pub fn main() -> Result<(), JsValue> {
             scene.script = default_script();
         
             let cube = MeshPrimitives::cube(&renderer);
+            panic!("{:?}", cube.unwrap().get_normals());
+
             let material = Material::of_color(Color::YELLOW);
             let object : Result<ObjectG<WebGL>, JsValue> = cube.map(|x| ObjectG::of_mesh(x, material));
             

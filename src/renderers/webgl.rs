@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::any::TypeId;
+use std::intrinsics::size_of;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -19,6 +20,9 @@ use web_sys::WebGlVertexArrayObject;
 use web_sys::{WebGlProgram, WebGlShader};
 
 use crate::Texture;
+use crate::alloc::cast_unchecked;
+use crate::alloc::malloc_mut_slice;
+use crate::alloc::malloc_slice;
 use crate::matrix::Matd2;
 use crate::matrix::Matd3;
 use crate::matrix::Matd4;
@@ -241,8 +245,9 @@ impl Renderer for WebGL {
         self.data.context.use_program(None)
     }
 
-    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]]) -> Result<MeshWGL, JsValue> {
+    fn create_mesh (&self, vertices: &[[f32;3]], indices: &[[u32;3]], normals: &[[f32;3]]) -> Result<MeshWGL, JsValue> {
         let vao : Option<WebGlVertexArrayObject> = self.data.context.create_vertex_array();
+        
         match vao {
             None => Err(JsValue::from_str("Error creating mesh")),
             Some(vao) => {
@@ -257,8 +262,17 @@ impl Renderer for WebGL {
                         self.data.context.enable_vertex_attrib_array(0);
 
                         let flat_indices : Vec<u32> = indices.iter().flat_map(|x| *x).collect();
-                        self.create_buffer_u32(flat_indices.as_slice())
-                            .map(|index| MeshWGL { id: vao, vertices: vertex, indices: index, vertex_count: vertices.len(), index_count: indices.len() })
+                        let index = self.create_buffer_u32(flat_indices.as_slice());
+
+                        match index {
+                            Err(x) => Err(x),
+                            Ok(index) => {
+                                let flat_normals : Vec<f32> = normals.iter().flat_map(|x| *x).collect();
+                                let normals = self.create_buffer_f32(flat_normals.as_slice());
+
+                                normals.map(|normals| MeshWGL { id: vao, data: self.data.clone(), vertices: vertex, normals, indices: index, vertex_count: vertices.len(), index_count: indices.len() })
+                            }
+                        }
                     }
                 }
             }
@@ -588,24 +602,45 @@ impl FragmentShader for FragmentWGL {}
 #[derive(Debug)]
 pub struct MeshWGL {
     id: WebGlVertexArrayObject,
+    data: Rc<SharedData>,
+
     vertices: WebGlBuffer,
     indices: WebGlBuffer,
+    normals: WebGlBuffer,
 
     vertex_count: usize,
     index_count: usize
 }
 
+impl MeshWGL {
+    fn read_buffer<'a, T> (&self, target: u32, buffer: &WebGlBuffer, len: usize) -> &'a [T] {
+        self.data.context.bind_buffer(target, Some(&buffer));
+
+        let dest;
+        unsafe { dest = malloc_mut_slice::<u8>(size_of::<T>() * len); }
+
+        self.data.context.get_buffer_sub_data_with_f64_and_u8_array(
+            target,
+            0.,
+            dest
+        );
+
+        let ptr = dest.as_ptr();
+        unsafe { std::slice::from_raw_parts(ptr as *const T, len) }
+    }
+}
+
 impl Mesh for MeshWGL {
     fn get_vertices<'a> (&'a self) -> &'a [EucVecf3] {
-        todo!()
+        self.read_buffer(WebGl2RenderingContext::ARRAY_BUFFER, &self.vertices, self.vertex_count)
     }
 
     fn get_indices<'a> (&'a self) -> &'a [[u32;3]] {
-        todo!()
+        self.read_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, &self.indices, self.index_count)
     }
 
     fn get_normals<'a> (&'a self) -> &'a [EucVecf3] {
-        todo!()
+        self.read_buffer(WebGl2RenderingContext::ARRAY_BUFFER, &self.normals, self.vertex_count)
     }
     
     fn get_vertex_count (&self) -> usize {

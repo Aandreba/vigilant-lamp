@@ -1,5 +1,5 @@
 use std::{str::FromStr, mem::size_of, ffi::c_void, ptr::addr_of};
-use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f, glGetVertexAttribfv, glGetVertexAttribPointerv, glGetFloatv, glGetBufferSubData}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE, GL_CURRENT_VERTEX_ATTRIB, GL_VERTEX_ATTRIB_ARRAY_SIZE, GL_VERTEX_ATTRIB_ARRAY_POINTER};
+use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f, glGetVertexAttribfv, glGetVertexAttribPointerv, glGetFloatv, glGetBufferSubData}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE, GL_CURRENT_VERTEX_ATTRIB, GL_VERTEX_ATTRIB_ARRAY_SIZE, GL_VERTEX_ATTRIB_ARRAY_POINTER, BufferTargetARB};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::{EucVecf2, EucVecd2, EucVecd3, EucVecd4, EucVecf3, EucVecf4}, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}, alloc::{malloc, malloc_ptr, malloc_mut_ptr, malloc_mut_slice, malloc_array}};
 
@@ -292,10 +292,10 @@ impl OpenGL {
         return Ok(id);
     }
 
-    pub unsafe fn read_buffer<'a, T> (idx: u32, len: usize) -> &'a [T] {
-        let ptr = malloc_array::<EucVecf3>(len);
-        glBindBuffer(GL_ARRAY_BUFFER, idx);
-        glGetBufferSubData(GL_ARRAY_BUFFER, 0, (size_of::<T>() * len) as isize, ptr as *mut c_void);
+    pub unsafe fn read_buffer<'a, T> (target: BufferTargetARB, idx: u32, len: usize) -> &'a [T] {
+        let ptr = malloc_array::<T>(len);
+        glBindBuffer(target, idx);
+        glGetBufferSubData(target, 0, (size_of::<T>() * len) as isize, ptr as *mut c_void);
         
         std::slice::from_raw_parts(ptr as *const T, len)
     }
@@ -496,19 +496,19 @@ pub struct MeshGL {
 impl Mesh for MeshGL {
     fn get_vertices<'a> (&'a self) -> &'a [EucVecf3] {
         unsafe { 
-            OpenGL::read_buffer(self.vertices, self.vertex_count)
+            OpenGL::read_buffer(GL_ARRAY_BUFFER, self.vertices, self.vertex_count)
         }
     }
 
     fn get_indices<'a> (&'a self) -> &'a [[u32;3]] {
         unsafe { 
-            OpenGL::read_buffer(self.indices, self.index_count)
+            OpenGL::read_buffer(GL_ELEMENT_ARRAY_BUFFER, self.indices, self.index_count)
         }
     }
 
     fn get_normals<'a> (&'a self) -> &'a [EucVecf3] {
         unsafe { 
-            OpenGL::read_buffer(self.normals, self.vertex_count)
+            OpenGL::read_buffer(GL_ARRAY_BUFFER, self.normals, self.vertex_count)
         }
     }
 
