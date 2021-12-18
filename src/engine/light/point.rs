@@ -7,8 +7,9 @@ pub struct PointLight {
 }
 
 impl PointLight {
-    pub fn new (color: Color, intensity: f32) -> AmbientLight {
-        AmbientLight { color, intensity }
+    pub fn new (position: EucVecf3, color: Color, intensity: f32) -> PointLight {
+        let ambient = AmbientLight { color, intensity };
+        PointLight { position, ambient }
     }
 }
 

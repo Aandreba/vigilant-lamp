@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use vigilant_lamp::input::{KeyboardListener, KeyboardKey, MouseListener};
-use vigilant_lamp::light::AmbientLight;
+use vigilant_lamp::light::{AmbientLight, PointLight};
 use vigilant_lamp::quaternion::Quaternion32;
+use vigilant_lamp::vector::EucVecf3;
 use vigilant_lamp::{Script, Scene, Material, Color, Mesh};
 use vigilant_lamp::{builder::build_opengl, PerspectiveCamera, MeshPrimitives, ObjectG, Renderer};
 
@@ -32,6 +33,8 @@ fn default_cam () -> PerspectiveCamera {
 
 fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(), R::ErrorType> {
     scene.ambient = Some(AmbientLight::new(Color::WHITE, 0.1));
+    scene.lights.push(PointLight::new(EucVecf3::new(0., 2., -5.), Color::WHITE, 5.));
+
     let mesh = MeshPrimitives::cube(renderer);
 
     match mesh {
@@ -53,11 +56,19 @@ fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(),
 fn default_script<R: Renderer> () -> Script<R> {
     Script::<R>::of_update(|s, k, m, d| {
         let sec = d.as_secs_f32();
+
+        let light = &mut s.lights[0];
         let obj = &mut s.objects[0];
 
         //obj.transform.rotate(sec, sec * 1.1, sec * 1.2);
 
-        if k.is_pressed(KeyboardKey::ESCAPE) {
+        if k.is_pressed(KeyboardKey::DOWN) {
+            light.position.y -= sec;
+        } if k.is_pressed(KeyboardKey::UP) {
+            light.position.y += sec;
+        }
+
+        if k.is_pressed(KeyboardKey::ESCAPE) { 
             panic!()
         } if k.is_pressed(KeyboardKey::W) {
             s.camera.translate(0., 0., -sec)

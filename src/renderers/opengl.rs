@@ -1,5 +1,5 @@
 use std::{str::FromStr, mem::size_of, ffi::c_void, ptr::addr_of};
-use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f, glGetVertexAttribfv, glGetVertexAttribPointerv, glGetFloatv, glGetBufferSubData}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE, GL_CURRENT_VERTEX_ATTRIB, GL_VERTEX_ATTRIB_ARRAY_SIZE, GL_VERTEX_ATTRIB_ARRAY_POINTER, BufferTargetARB};
+use gl33::{GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_FILL, GL_FLOAT, GL_FRAGMENT_SHADER, GL_FRONT_AND_BACK, GL_LINE, GL_LINK_STATUS, GL_STATIC_DRAW, GL_TRIANGLES, GL_UNSIGNED_INT, GL_VALIDATE_STATUS, GL_VERTEX_SHADER, GLenum, global_loader::{glAttachShader, glBindBuffer, glBindVertexArray, glBufferData, glClear, glClearColor, glCompileShader, glCreateProgram, glCreateShader, glDisableVertexAttribArray, glDrawElements, glEnableVertexAttribArray, glGenBuffers, glGenVertexArrays, glGetProgramInfoLog, glGetProgramiv, glGetShaderInfoLog, glGetShaderiv, glGetUniformLocation, glLinkProgram, glPolygonMode, glShaderSource, glUniform1f, glUniform1fv, glUniform1i, glUniform1iv, glUniform1ui, glUniform1uiv, glUniform4iv, glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUseProgram, glValidateProgram, glVertexAttribPointer, load_global_gl, glGenTextures, glBindTexture, glPixelStorei, glTexParameteri, glTexImage1D, glUniform2f, glUniform2fv, glUniform3fv, glUniform4fv, glUniform3f, glUniform4f, glGetVertexAttribfv, glGetVertexAttribPointerv, glGetFloatv, glGetBufferSubData, glEnable, glDepthFunc, glBlendFunc}, GL_COMPILE_STATUS, GL_TEXTURE_2D, GL_UNPACK_ALIGNMENT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_NEAREST, GL_RGBA, GL_UNSIGNED_BYTE, GL_CURRENT_VERTEX_ATTRIB, GL_VERTEX_ATTRIB_ARRAY_SIZE, GL_VERTEX_ATTRIB_ARRAY_POINTER, BufferTargetARB, GL_DEPTH_TEST, GL_BLEND, GL_LESS, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DEPTH_BUFFER_BIT};
 use glutin::{Api, ContextBuilder, GlRequest, PossiblyCurrent, WindowedContext, dpi::LogicalSize, event::{ElementState, Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use crate::{engine::{input::{KeyboardKey, KeyboardListener, MouseListener}, Scene}, graph::{Mesh, Renderer, shaders::{Program, Uniform, FragmentShader, VertexShader}, Window}, ResultFlatMap, Texture, shaders::UniformValue, vector::{EucVecf2, EucVecd2, EucVecd3, EucVecd4, EucVecf3, EucVecf4}, matrix::{Matf2, Matf3, Matf4, Matd2, Matd3, Matd4}, alloc::{malloc, malloc_ptr, malloc_mut_ptr, malloc_mut_slice, malloc_array}};
 
@@ -74,10 +74,13 @@ impl Renderer for OpenGL {
                             }
                             
                             scene.camera_matrix().set_to_program(&mut scene.program, "camera");
+
                             match &scene.ambient {
                                 Some(x) => x.set_to_program(&mut scene.program, "ambient"),
                                 None => false,
                             };
+
+                            scene.lights[0].set_to_program(&mut scene.program, "point");
 
                             for elem in scene.objects.iter() {
                                 elem.transform.matrix().set_to_program(&mut scene.program, "world_matrix");
@@ -123,6 +126,12 @@ impl Renderer for OpenGL {
                 context.get_proc_address(r_str) as _
             });
             
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
             glClearColor(0., 0., 0., 1.);
             Ok(WinitWindow { title: String::from_str(title).unwrap(), context })
         }
@@ -552,7 +561,7 @@ impl Window for WinitWindow {
 
     fn clear (&mut self) {
         unsafe {
-            glClear(gl33::GL_COLOR_BUFFER_BIT)
+            glClear(gl33::GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         }
     }
 
