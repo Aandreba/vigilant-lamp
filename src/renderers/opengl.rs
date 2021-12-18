@@ -74,6 +74,7 @@ impl Renderer for OpenGL {
                             }
                             
                             scene.camera_matrix().set_to_program(&mut scene.program, "camera");
+                            scene.camera.get_position().set_to_program(&mut scene.program, "cam_pos");
 
                             match &scene.ambient {
                                 Some(x) => x.set_to_program(&mut scene.program, "ambient"),

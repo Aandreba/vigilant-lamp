@@ -4,20 +4,21 @@ use crate::{shaders::{UniformValue}, Renderer, Color};
 #[derive(Debug, Clone)]
 pub struct Material<R: Renderer> {
     pub color: Option<Color>,
-    pub texture: Option<R::TextureType>
+    pub texture: Option<R::TextureType>,
+    pub shininess: f32
 }
 
 impl<R: Renderer> Material<R> {
-    pub fn new (color: Color, texture: R::TextureType) -> Material<R> {
-        Material { color: Some(color), texture: Some(texture) }
+    pub fn new (color: Color, texture: R::TextureType, shininess: f32) -> Material<R> {
+        Material { color: Some(color), texture: Some(texture), shininess }
     }
 
-    pub fn of_color (color: Color) -> Material<R> {
-        Material { color: Some(color), texture: None }
+    pub fn of_color (color: Color, shininess: f32) -> Material<R> {
+        Material { color: Some(color), texture: None, shininess }
     }
 
-    pub fn of_texture (texture: R::TextureType) -> Material<R> {
-        Material { color: None, texture: Some(texture) }
+    pub fn of_texture (texture: R::TextureType, shininess: f32) -> Material<R> {
+        Material { color: None, texture: Some(texture), shininess }
     }
 }
 
@@ -41,7 +42,11 @@ impl<R: Renderer> UniformValue for Material<R> {
             }
         };
 
-        color && texture
+        let mut shininess = key.to_string();
+        shininess.push_str(".shininess");
+
+        let shininess = self.shininess.set_to_program(program, shininess.as_str());
+        color & texture & shininess
     }
 }
 

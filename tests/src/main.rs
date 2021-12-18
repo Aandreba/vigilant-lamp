@@ -32,8 +32,8 @@ fn default_cam () -> PerspectiveCamera {
 }
 
 fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(), R::ErrorType> {
-    scene.ambient = Some(AmbientLight::new(Color::WHITE, 0.1));
-    scene.lights.push(PointLight::new(EucVecf3::new(0., 2., -5.), Color::WHITE, 5.));
+    scene.ambient = Some(AmbientLight::new(Color::WHITE, 0.25));
+    scene.lights.push(PointLight::new(EucVecf3::new(0., 2., -5.), Color::WHITE, 10.));
 
     let mesh = MeshPrimitives::cube(renderer);
 
@@ -41,7 +41,7 @@ fn default_scene<R: Renderer> (renderer: &R, scene: &mut Scene<R>) -> Result<(),
         Err(x) => Err(x),
         Ok(mesh) => {
             mesh.get_vertices();
-            let material = Material::of_color(Color::YELLOW);
+            let material = Material::of_color(Color::YELLOW, 32.);
             let mut obj = ObjectG::of_mesh(mesh, material);
 
             obj.transform.position.z = -5.;
@@ -67,6 +67,8 @@ fn default_script<R: Renderer> () -> Script<R> {
         } if k.is_pressed(KeyboardKey::UP) {
             light.position.y += sec;
         }
+
+        light.position.y = light.position.y.max(0.5);
 
         if k.is_pressed(KeyboardKey::ESCAPE) { 
             panic!()

@@ -61,10 +61,10 @@ fn build_gl<R: Renderer> (vertex_inc: &str, fragment_inc: &str, renderer: &R) ->
             match fragment {
                 Err(z) => Err(z),
                 Ok(z) => renderer.create_program(x, z, &[
-                    "world_matrix", "camera", 
+                    "world_matrix", "camera", "cam_pos",
                     "ambient.color", "ambient.intensity", 
                     "point.position", "point.light.color", "point.light.intensity",
-                    "material.color", "material.texture"
+                    "material.color", "material.texture", "material.shininess"
                 ])
             }
         }
